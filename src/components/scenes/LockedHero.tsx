@@ -289,16 +289,6 @@ export default function LockedHero({ state, timeRemaining }: Props) {
         animate={unlocking ? { opacity: 0 } : { opacity: 1 }}
         transition={unlocking ? { duration: 0.4 } : { delay: 2.2, duration: 1.4 }}
       >
-        <p
-          className="uppercase"
-          style={{
-            fontSize: 'clamp(9px, 0.7vw, 11px)',
-            letterSpacing: '0.4em',
-            color: C.faint,
-          }}
-        >
-          01&ensp;·&ensp;locked hero
-        </p>
       </motion.div>
 
       {/* ── Main content ── */}
