@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Fonts — resolved at runtime via next/font CSS vars */
+  --font-serif: var(--font-fraunces), Georgia, serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+
+  /* Scene palette */
+  --color-locked:        #1A1A2E;
+  --color-locked-soft:   #2C2C4E;
+  --color-accent:        #D85A30;
+  --color-accent-alt:    #E85A3F;
+  --color-purple:        #534AB7;
+  --color-purple-soft:   #7F77DD;
+  --color-peach:         #FAC775;
+  --color-peach-soft:    #FAEEDA;
+  --color-mint:          #5DCAA5;
+  --color-mint-dark:     #1D9E75;
+  --color-scene-green:   #97C459;
+  --color-pink:          #F4C0D1;
+  --color-pink-deep:     #D4537E;
+  --color-rose:          #993556;
+  --color-amber:         #854F0B;
+  --color-twilight:      #72243E;
+  --color-twilight-dark: #4B1528;
+}
