@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
-import { UNLOCK_DATE } from '@/lib/constants'
+import { RELATIONSHIP_START } from '@/lib/constants'
 
 const P = {
   dusk:  '#2A1810',
@@ -62,13 +62,14 @@ const BG_HEARTS = [
 
 // ── Counter hook ──────────────────────────────────────────────────────────────
 function useSinceCounter() {
-  const [since, setSince] = useState({ days: 0, hours: 0 })
+  const [since, setSince] = useState({ days: 0, hours: 0, minutes: 0 })
   useEffect(() => {
     function calc() {
-      const diff = Date.now() - UNLOCK_DATE.getTime()
+      const diff = Date.now() - RELATIONSHIP_START.getTime()
       if (diff <= 0) return
-      const h = Math.floor(diff / 3_600_000)
-      setSince({ days: Math.floor(h / 24), hours: h % 24 })
+      const totalMin = Math.floor(diff / 60_000)
+      const hours    = Math.floor(totalMin / 60)
+      setSince({ days: Math.floor(hours / 24), hours: hours % 24, minutes: totalMin % 60 })
     }
     calc()
     const id = setInterval(calc, 60_000)
@@ -279,6 +280,57 @@ function SophieSleeping() {
   )
 }
 
+// ── Click heart burst ─────────────────────────────────────────────────────────
+type Burst = { id: number; x: number; y: number }
+
+const BURST_PARTICLES = Array.from({ length: 16 }, (_, i) => {
+  const angle = (i * (360 / 16) + (i % 3) * 14 - 90) * (Math.PI / 180)
+  const dist  = 45 + (i % 5) * 22
+  return {
+    tx:     Math.cos(angle) * dist,
+    ty:     Math.sin(angle) * dist,
+    floatY: 110 + (i % 4) * 40,
+    floatX: ((i % 3) - 1) * 30,
+    size:   14 + (i % 4) * 6,
+    delay:  i * 0.035,
+    color:  i % 3 === 0 ? P.honey : i % 3 === 1 ? P.ember : P.peach,
+  }
+})
+
+function HeartBurst({ x, y }: { x: number; y: number }) {
+  return (
+    <div
+      className="pointer-events-none absolute z-20"
+      style={{ left: x, top: y }}
+      aria-hidden
+    >
+      {BURST_PARTICLES.map((p, i) => (
+        <motion.span
+          key={i}
+          className="absolute select-none leading-none"
+          style={{ fontSize: p.size, color: p.color }}
+          initial={{ x: 0, y: 0, opacity: 0, scale: 0 }}
+          animate={{
+            x: [0, p.tx, p.tx + p.floatX],
+            y: [0, p.ty, p.ty - p.floatY],
+            opacity: [0, 1, 0.85, 0],
+            scale:   [0, 1.4, 1.1, 0.4],
+          }}
+          transition={{
+            duration: 2.4,
+            delay: p.delay,
+            ease: [0.22, 1, 0.36, 1],
+            times: [0, 0.25, 0.65, 1],
+            opacity: { times: [0, 0.15, 0.6, 1] },
+          }}
+        >
+          ♡
+        </motion.span>
+      ))}
+    </div>
+  )
+}
+
 // ── Variants — spring physics ─────────────────────────────────────────────────
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -296,8 +348,17 @@ const fadeUp = {
 
 // ── Scene ─────────────────────────────────────────────────────────────────────
 export default function Hero() {
-  const { days, hours } = useSinceCounter()
+  const { days, hours, minutes } = useSinceCounter()
   const ref = useRef<HTMLElement>(null)
+  const [bursts, setBursts] = useState<Burst[]>([])
+
+  function handleClick(e: React.MouseEvent<HTMLElement>) {
+    if ((e.nativeEvent as PointerEvent).pointerType !== 'mouse') return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const id   = Date.now()
+    setBursts(prev => [...prev, { id, x: e.clientX - rect.left, y: e.clientY - rect.top }])
+    setTimeout(() => setBursts(prev => prev.filter(b => b.id !== id)), 2800)
+  }
 
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
   const bgY            = useTransform(scrollYProgress, [0, 1], ['0%',  '12%'])
@@ -309,6 +370,7 @@ export default function Hero() {
     <section
       ref={ref}
       className="relative flex h-dvh w-full flex-col items-center justify-center overflow-hidden px-6"
+      onClick={handleClick}
     >
       {/* Background */}
       <motion.div
@@ -428,6 +490,11 @@ export default function Hero() {
             <PixelHeart size={8} color={P.honey} />
           </div>
           <CounterPill value={hours} label="hours" />
+          <div className="flex flex-col items-center pb-3 gap-1" style={{ opacity: 0.55 }} aria-hidden>
+            <PixelHeart size={8} color={P.honey} />
+            <PixelHeart size={8} color={P.honey} />
+          </div>
+          <CounterPill value={minutes} label="min" />
         </motion.div>
 
         <motion.div
@@ -439,6 +506,8 @@ export default function Hero() {
       </motion.div>
 
       <SophieSleeping />
+
+      {bursts.map(b => <HeartBurst key={b.id} x={b.x} y={b.y} />)}
 
       {/* Scroll hint */}
       <motion.div

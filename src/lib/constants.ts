@@ -1,4 +1,6 @@
-// Midnight on May 25 2026 in Lorie's local timezone (browser-resolved)
+export const RELATIONSHIP_START = new Date('2025-10-25T22:45:00')
+
+// 1-year anniversary — when the locked hero unlocks
 export const UNLOCK_DATE = new Date('2026-04-25T00:00:00')
 
 export const UNLOCK_DATE_DISPLAY = '4.25.2026'
