@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { RELATIONSHIP_START } from '@/lib/constants'
+import Sophie from '@/components/Sophie'
 
 const P = {
   dusk:  '#2A1810',
@@ -240,45 +241,6 @@ function CounterPill({ value, label }: { value: number; label: string }) {
   )
 }
 
-function SophieSleeping() {
-  return (
-    <motion.div
-      className="pointer-events-none absolute bottom-6 right-4"
-      animate={{ scaleX: [1, 1.025, 1], scaleY: [1, 1.04, 1], y: [0, -2, 0] }}
-      transition={{ duration: 3.8, repeat: Infinity, ease: 'easeInOut' }}
-      style={{ transformOrigin: 'bottom center' }}
-      aria-hidden
-    >
-      <svg width="100" height="84" viewBox="0 0 100 84" fill="none">
-        <ellipse cx="50" cy="80" rx="38" ry="5" fill="rgba(199,91,47,0.09)" />
-        <motion.path
-          d="M 82 46 Q 94 30 84 16 Q 74 6 60 14 Q 52 20 56 32"
-          stroke={P.peach} strokeWidth="9" strokeLinecap="round" fill="none"
-          animate={{ rotate: [0, 4, 0, -3, 0] }}
-          transition={{ duration: 5, repeat: Infinity, delay: 5, repeatDelay: 9, ease: 'easeInOut' }}
-          style={{ transformOrigin: '82px 46px' }}
-        />
-        <ellipse cx="48" cy="56" rx="38" ry="24" fill={P.peach} />
-        <circle cx="24" cy="32" r="18" fill={P.peach} />
-        <polygon points="12,20 17,7 25,20" fill={P.peach} />
-        <polygon points="24,20 32,7 37,20" fill={P.peach} />
-        <polygon points="14.5,19 18,11 23.5,19" fill={P.honey} opacity="0.65" />
-        <polygon points="25,19 30,11 34.5,19" fill={P.honey} opacity="0.65" />
-        <path d="M 20 54 Q 48 47 76 54" stroke="#D97A52" strokeWidth="1.6" opacity="0.28" strokeLinecap="round" fill="none" />
-        <path d="M 18 63 Q 46 56 74 62" stroke="#D97A52" strokeWidth="1.5" opacity="0.24" strokeLinecap="round" fill="none" />
-        <path d="M 20 71 Q 46 65 72 70" stroke="#D97A52" strokeWidth="1.4" opacity="0.2"  strokeLinecap="round" fill="none" />
-        <path d="M 15 32 Q 19 36.5 24 32" stroke={P.dusk} strokeWidth="1.8" strokeLinecap="round" fill="none" />
-        <path d="M 23 37 L 24.5 40 L 26 37" fill={P.ember} opacity="0.35" />
-        <ellipse cx="32" cy="74" rx="12" ry="5.5" fill={P.peach} />
-        <ellipse cx="50" cy="76" rx="11" ry="5"   fill={P.peach} />
-        <circle cx="28" cy="75" r="2.2" fill={P.honey} opacity="0.45" />
-        <circle cx="34" cy="76" r="2.2" fill={P.honey} opacity="0.45" />
-        <circle cx="47" cy="77" r="2.2" fill={P.honey} opacity="0.45" />
-        <circle cx="54" cy="76" r="2.2" fill={P.honey} opacity="0.45" />
-      </svg>
-    </motion.div>
-  )
-}
 
 // ── Click heart burst ─────────────────────────────────────────────────────────
 type Burst = { id: number; x: number; y: number }
@@ -505,7 +467,7 @@ export default function Hero() {
         </motion.div>
       </motion.div>
 
-      <SophieSleeping />
+      <Sophie variant="sleeping" className="absolute bottom-6 right-4 origin-bottom-right scale-[0.62]" />
 
       {bursts.map(b => <HeartBurst key={b.id} x={b.x} y={b.y} />)}
 
