@@ -1,0 +1,461 @@
+'use client'
+
+import { useRef, useState, useEffect } from 'react'
+import { motion, useScroll, useTransform } from 'framer-motion'
+import { UNLOCK_DATE } from '@/lib/constants'
+
+const P = {
+  dusk:  '#2A1810',
+  ember: '#C75B2F',
+  peach: '#F0997B',
+  honey: '#FAC775',
+  cream: '#FFF8EE',
+} as const
+
+// ── Pixel art heart (7×7 grid) ───────────────────────────────────────────────
+function PixelHeart({ size = 12, color = P.ember }: { size?: number; color?: string }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 7 7"
+      style={{ imageRendering: 'pixelated', display: 'block', flexShrink: 0 }}
+      aria-hidden
+    >
+      <rect x="1" y="0" width="2" height="1" fill={color} />
+      <rect x="4" y="0" width="2" height="1" fill={color} />
+      <rect x="0" y="1" width="7" height="1" fill={color} />
+      <rect x="0" y="2" width="7" height="1" fill={color} />
+      <rect x="0" y="3" width="7" height="1" fill={color} />
+      <rect x="1" y="4" width="5" height="1" fill={color} />
+      <rect x="2" y="5" width="3" height="1" fill={color} />
+      <rect x="3" y="6" width="1" height="1" fill={color} />
+    </svg>
+  )
+}
+
+// ── Deterministic ambient data ────────────────────────────────────────────────
+const HEARTS = Array.from({ length: 14 }, (_, i) => ({
+  x:          (i * 71.3 + 5) % 88 + 6,
+  size:        7 + (i % 4) * 3,
+  maxOpacity:  0.13 + (i % 5) * 0.05,
+  duration:   10 + (i % 5) * 3.5,
+  delay:       i < 6 ? i * 0.6 : (i * 1.3) % 8,
+  drift:       (i % 3 - 1) * 30,
+}))
+
+const PIXEL_SPARKLES = Array.from({ length: 14 }, (_, i) => ({
+  x:        (i * 53.7 + 8) % 90 + 5,
+  y:        (i * 37.2 + 15) % 84 + 8,
+  size:      5 + (i % 3) * 2,
+  delay:    (i * 0.55) % 3.5,
+  duration:  2.5 + (i % 4) * 0.8,
+  warm:      i % 3 !== 2,
+}))
+
+const BG_HEARTS = [
+  { x: 7,  y: 12, size: 12 },
+  { x: 88, y: 22, size: 10 },
+  { x: 13, y: 62, size: 14 },
+  { x: 84, y: 68, size: 12 },
+  { x: 46, y: 6,  size: 10 },
+  { x: 52, y: 86, size: 12 },
+]
+
+// ── Counter hook ──────────────────────────────────────────────────────────────
+function useSinceCounter() {
+  const [since, setSince] = useState({ days: 0, hours: 0 })
+  useEffect(() => {
+    function calc() {
+      const diff = Date.now() - UNLOCK_DATE.getTime()
+      if (diff <= 0) return
+      const h = Math.floor(diff / 3_600_000)
+      setSince({ days: Math.floor(h / 24), hours: h % 24 })
+    }
+    calc()
+    const id = setInterval(calc, 60_000)
+    return () => clearInterval(id)
+  }, [])
+  return since
+}
+
+// ── Ambient layers ────────────────────────────────────────────────────────────
+function FloatingHearts() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+      {HEARTS.map((h, i) => (
+        <motion.span
+          key={i}
+          className="absolute select-none leading-none"
+          style={{ left: `${h.x}%`, top: 0, fontSize: h.size, color: P.ember }}
+          animate={{ y: [950, -60], x: [0, h.drift], opacity: [0, h.maxOpacity, h.maxOpacity, 0] }}
+          transition={{
+            duration: h.duration, delay: h.delay, repeat: Infinity, ease: 'linear',
+            opacity: { times: [0, 0.07, 0.88, 1] },
+          }}
+        >
+          ♡
+        </motion.span>
+      ))}
+    </div>
+  )
+}
+
+function PixelSparkles() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+      {PIXEL_SPARKLES.map((s, i) => (
+        <motion.div
+          key={i}
+          className="absolute"
+          style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.size, height: s.size }}
+          animate={{ opacity: [0.03, 0.38, 0.03], scale: [0.7, 1.15, 0.7] }}
+          transition={{ duration: s.duration, delay: s.delay, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <svg width={s.size} height={s.size} viewBox="0 0 5 5" style={{ imageRendering: 'pixelated' }}>
+            <rect x="2" y="0" width="1" height="5" fill={s.warm ? P.honey : P.peach} />
+            <rect x="0" y="2" width="5" height="1" fill={s.warm ? P.honey : P.peach} />
+          </svg>
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
+function BgPixelHearts() {
+  return (
+    <div className="pointer-events-none absolute inset-0" aria-hidden>
+      {BG_HEARTS.map((h, i) => (
+        <motion.div
+          key={i}
+          className="absolute"
+          style={{ left: `${h.x}%`, top: `${h.y}%` }}
+          animate={{ opacity: [0.05, 0.14, 0.05] }}
+          transition={{ duration: 6 + i * 0.8, repeat: Infinity, ease: 'easeInOut', delay: i * 0.6 }}
+        >
+          <PixelHeart size={h.size} color={P.ember} />
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
+// ── Decorative corners ────────────────────────────────────────────────────────
+function BotanicalCornerTR() {
+  return (
+    <div className="pointer-events-none absolute top-5 right-5" aria-hidden>
+      <svg width="90" height="90" viewBox="0 0 90 90" fill="none" opacity="0.32">
+        <path d="M 78 8 Q 55 30 28 76" stroke={P.honey} strokeWidth="1.4" strokeLinecap="round" fill="none" />
+        <path d="M 60 22 Q 74 12 80 24 Q 66 30 60 22z" fill={P.peach} />
+        <path d="M 46 38 Q 32 24 42 16 Q 52 28 46 38z" fill={P.honey} opacity="0.8" />
+        <path d="M 34 55 Q 20 46 28 36 Q 40 44 34 55z" fill={P.peach} opacity="0.65" />
+        <circle cx="78" cy="8" r="3.5" fill={P.ember} opacity="0.55" />
+        <circle cx="78" cy="8" r="1.8" fill={P.honey} opacity="0.9" />
+      </svg>
+    </div>
+  )
+}
+
+function BotanicalCornerBL() {
+  return (
+    <div className="pointer-events-none absolute bottom-16 left-4" aria-hidden>
+      <svg width="90" height="80" viewBox="0 0 90 80" fill="none" opacity="0.28">
+        <path d="M 12 72 Q 38 44 64 8" stroke={P.honey} strokeWidth="1.4" strokeLinecap="round" fill="none" />
+        <path d="M 22 58 Q 7 50 12 38 Q 26 46 22 58z" fill={P.peach} />
+        <path d="M 40 40 Q 26 26 36 17 Q 48 28 40 40z" fill={P.honey} opacity="0.8" />
+        <path d="M 56 20 Q 46 8 56 2 Q 64 12 56 20z" fill={P.peach} opacity="0.65" />
+        <circle cx="64" cy="8" r="3.5" fill={P.ember} opacity="0.5" />
+        <circle cx="64" cy="8" r="1.8" fill={P.honey} opacity="0.85" />
+      </svg>
+    </div>
+  )
+}
+
+// ── Content components ────────────────────────────────────────────────────────
+function Ornament() {
+  return (
+    <div className="flex items-center" style={{ gap: 8 }} aria-hidden>
+      <PixelHeart size={10} color={P.honey} />
+      <svg width="110" height="16" viewBox="0 0 110 16" fill="none">
+        <line x1="0" y1="8" x2="42" y2="8" stroke={P.honey} strokeWidth="0.75" opacity="0.45" />
+        <path d="M 55 3 L 60 8 L 55 13 L 50 8 Z" fill={P.honey} opacity="0.65" />
+        <path d="M 55 5 L 59 8 L 55 11 L 51 8 Z" fill={P.ember} opacity="0.35" />
+        <line x1="68" y1="8" x2="110" y2="8" stroke={P.honey} strokeWidth="0.75" opacity="0.45" />
+      </svg>
+      <PixelHeart size={10} color={P.honey} />
+    </div>
+  )
+}
+
+function TogetherBadge() {
+  return (
+    <div
+      className="relative flex items-center"
+      style={{
+        gap: '10px',
+        padding: '10px 22px 11px',
+        background: 'rgba(250,199,117,0.07)',
+        border: '1px dashed rgba(250,199,117,0.42)',
+        borderRadius: '2px',
+      }}
+    >
+      <div style={{ position: 'absolute', width: 5, height: 5, background: P.honey, opacity: 0.65, top: -2,  left: -2  }} />
+      <div style={{ position: 'absolute', width: 5, height: 5, background: P.honey, opacity: 0.65, top: -2,  right: -2 }} />
+      <div style={{ position: 'absolute', width: 5, height: 5, background: P.honey, opacity: 0.65, bottom: -2, left: -2  }} />
+      <div style={{ position: 'absolute', width: 5, height: 5, background: P.honey, opacity: 0.65, bottom: -2, right: -2 }} />
+
+      <PixelHeart size={11} color={P.ember} />
+      <span
+        className="font-serif italic"
+        style={{
+          fontSize: 'clamp(1rem, 2.2vw, 1.35rem)',
+          color: P.dusk,
+          letterSpacing: '0.06em',
+          lineHeight: 1,
+          opacity: 0.82,
+        }}
+      >
+        together and counting
+      </span>
+      <PixelHeart size={11} color={P.ember} />
+    </div>
+  )
+}
+
+function CounterPill({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <span
+        className="tabular-nums font-serif leading-none"
+        style={{ fontSize: 'clamp(3rem, 6.5vw, 5rem)', color: P.dusk, letterSpacing: '-0.03em', fontWeight: 400 }}
+      >
+        {value}
+      </span>
+      <span
+        className="font-sans uppercase"
+        style={{ fontSize: 'clamp(8px, 0.7vw, 10px)', letterSpacing: '0.28em', color: P.peach, opacity: 0.85 }}
+      >
+        {label}
+      </span>
+    </div>
+  )
+}
+
+function SophieSleeping() {
+  return (
+    <motion.div
+      className="pointer-events-none absolute bottom-6 right-4"
+      animate={{ scaleX: [1, 1.025, 1], scaleY: [1, 1.04, 1], y: [0, -2, 0] }}
+      transition={{ duration: 3.8, repeat: Infinity, ease: 'easeInOut' }}
+      style={{ transformOrigin: 'bottom center' }}
+      aria-hidden
+    >
+      <svg width="100" height="84" viewBox="0 0 100 84" fill="none">
+        <ellipse cx="50" cy="80" rx="38" ry="5" fill="rgba(199,91,47,0.09)" />
+        <motion.path
+          d="M 82 46 Q 94 30 84 16 Q 74 6 60 14 Q 52 20 56 32"
+          stroke={P.peach} strokeWidth="9" strokeLinecap="round" fill="none"
+          animate={{ rotate: [0, 4, 0, -3, 0] }}
+          transition={{ duration: 5, repeat: Infinity, delay: 5, repeatDelay: 9, ease: 'easeInOut' }}
+          style={{ transformOrigin: '82px 46px' }}
+        />
+        <ellipse cx="48" cy="56" rx="38" ry="24" fill={P.peach} />
+        <circle cx="24" cy="32" r="18" fill={P.peach} />
+        <polygon points="12,20 17,7 25,20" fill={P.peach} />
+        <polygon points="24,20 32,7 37,20" fill={P.peach} />
+        <polygon points="14.5,19 18,11 23.5,19" fill={P.honey} opacity="0.65" />
+        <polygon points="25,19 30,11 34.5,19" fill={P.honey} opacity="0.65" />
+        <path d="M 20 54 Q 48 47 76 54" stroke="#D97A52" strokeWidth="1.6" opacity="0.28" strokeLinecap="round" fill="none" />
+        <path d="M 18 63 Q 46 56 74 62" stroke="#D97A52" strokeWidth="1.5" opacity="0.24" strokeLinecap="round" fill="none" />
+        <path d="M 20 71 Q 46 65 72 70" stroke="#D97A52" strokeWidth="1.4" opacity="0.2"  strokeLinecap="round" fill="none" />
+        <path d="M 15 32 Q 19 36.5 24 32" stroke={P.dusk} strokeWidth="1.8" strokeLinecap="round" fill="none" />
+        <path d="M 23 37 L 24.5 40 L 26 37" fill={P.ember} opacity="0.35" />
+        <ellipse cx="32" cy="74" rx="12" ry="5.5" fill={P.peach} />
+        <ellipse cx="50" cy="76" rx="11" ry="5"   fill={P.peach} />
+        <circle cx="28" cy="75" r="2.2" fill={P.honey} opacity="0.45" />
+        <circle cx="34" cy="76" r="2.2" fill={P.honey} opacity="0.45" />
+        <circle cx="47" cy="77" r="2.2" fill={P.honey} opacity="0.45" />
+        <circle cx="54" cy="76" r="2.2" fill={P.honey} opacity="0.45" />
+      </svg>
+    </motion.div>
+  )
+}
+
+// ── Variants — spring physics ─────────────────────────────────────────────────
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  show: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: i * 0.12,
+      type: 'spring' as const,
+      stiffness: 260,
+      damping: 28,
+    },
+  }),
+}
+
+// ── Scene ─────────────────────────────────────────────────────────────────────
+export default function Hero() {
+  const { days, hours } = useSinceCounter()
+  const ref = useRef<HTMLElement>(null)
+
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
+  const bgY            = useTransform(scrollYProgress, [0, 1], ['0%',  '12%'])
+  const contentY       = useTransform(scrollYProgress, [0, 1], ['0%', '-18%'])
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.65], [1, 0])
+  const scrollHintOp   = useTransform(scrollYProgress, [0, 0.2],  [1, 0])
+
+  return (
+    <section
+      ref={ref}
+      className="relative flex h-dvh w-full flex-col items-center justify-center overflow-hidden px-6"
+    >
+      {/* Background */}
+      <motion.div
+        className="absolute inset-x-0"
+        style={{
+          y: bgY, top: '-10%', height: '120%',
+          background: `linear-gradient(175deg, ${P.cream} 0%, #FEF0DC 60%, #FDDFC8 100%)`,
+        }}
+        aria-hidden
+      />
+
+      {/* Vignette edges */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `
+            radial-gradient(ellipse 90% 40% at 50% 0%, rgba(42,24,16,0.06) 0%, transparent 100%),
+            radial-gradient(ellipse 90% 30% at 50% 100%, rgba(42,24,16,0.05) 0%, transparent 100%)
+          `,
+        }}
+        aria-hidden
+      />
+
+      {/* Warm glow behind title */}
+      <div
+        className="pointer-events-none absolute"
+        style={{
+          top: '38%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 'min(520px, 95vw)',
+          height: 'min(280px, 55vw)',
+          background: `radial-gradient(ellipse at center, rgba(250,199,117,0.28) 0%, rgba(240,153,123,0.12) 45%, transparent 72%)`,
+          filter: 'blur(18px)',
+        }}
+        aria-hidden
+      />
+
+      {/* Center radial ambient */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ background: 'radial-gradient(ellipse 70% 55% at 50% 48%, rgba(250,199,117,0.20) 0%, transparent 68%)' }}
+        aria-hidden
+      />
+
+      {/* Grain texture */}
+      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden>
+        <filter id="grain">
+          <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="4" stitchTiles="stitch" />
+          <feColorMatrix type="saturate" values="0" />
+        </filter>
+      </svg>
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ filter: 'url(#grain)', opacity: 0.032, mixBlendMode: 'overlay' }}
+        aria-hidden
+      />
+
+      <PixelSparkles />
+      <BgPixelHearts />
+      <FloatingHearts />
+      <BotanicalCornerTR />
+      <BotanicalCornerBL />
+
+      <motion.div
+        className="relative z-10 flex flex-col items-center text-center"
+        style={{ gap: 'clamp(0.5rem, 1.4vw, 0.9rem)', y: contentY, opacity: contentOpacity }}
+      >
+        <motion.div custom={0} variants={fadeUp} initial="hidden" animate="show">
+          <Ornament />
+        </motion.div>
+
+        {/* Title — Great Vibes script */}
+        <motion.h1
+          custom={1} variants={fadeUp} initial="hidden" animate="show"
+          style={{
+            fontFamily: 'var(--font-script)',
+            fontSize: 'clamp(3rem, 9.5vw, 7rem)',
+            color: P.dusk,
+            lineHeight: 1.08,
+            letterSpacing: '0.01em',
+          }}
+        >
+          one year of us
+        </motion.h1>
+
+        {/* Subtitle */}
+        <motion.p
+          custom={2} variants={fadeUp} initial="hidden" animate="show"
+          className="font-serif italic"
+          style={{
+            fontSize: 'clamp(0.95rem, 2vw, 1.45rem)',
+            color: P.ember,
+            letterSpacing: '0.04em',
+            opacity: 0.92,
+          }}
+        >
+          for Rie ♡
+        </motion.p>
+
+        {/* Thin rule */}
+        <motion.div
+          custom={2.5} variants={fadeUp} initial="hidden" animate="show"
+          style={{ width: 'clamp(40px, 8vw, 72px)', height: 1, background: `linear-gradient(to right, transparent, ${P.honey}, transparent)`, opacity: 0.45 }}
+          aria-hidden
+        />
+
+        {/* Counter */}
+        <motion.div
+          custom={3} variants={fadeUp} initial="hidden" animate="show"
+          className="flex items-end"
+          style={{ gap: 'clamp(1.25rem, 3.5vw, 2.75rem)', marginTop: 'clamp(0.5rem, 1.5vw, 1.2rem)' }}
+        >
+          <CounterPill value={days} label="days" />
+          <div className="flex flex-col items-center pb-3 gap-1" style={{ opacity: 0.55 }} aria-hidden>
+            <PixelHeart size={8} color={P.honey} />
+            <PixelHeart size={8} color={P.honey} />
+          </div>
+          <CounterPill value={hours} label="hours" />
+        </motion.div>
+
+        <motion.div
+          custom={4} variants={fadeUp} initial="hidden" animate="show"
+          style={{ marginTop: 'clamp(0.4rem, 1vw, 0.75rem)' }}
+        >
+          <TogetherBadge />
+        </motion.div>
+      </motion.div>
+
+      <SophieSleeping />
+
+      {/* Scroll hint */}
+      <motion.div
+        className="absolute bottom-7 left-0 right-0 z-10 flex justify-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.8, duration: 1.2 }}
+        style={{ opacity: scrollHintOp }}
+      >
+        <motion.span
+          style={{ color: P.honey, fontSize: '1.1rem', lineHeight: 1, display: 'block' }}
+          animate={{ y: [0, 7, 0] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          ↓
+        </motion.span>
+      </motion.div>
+    </section>
+  )
+}

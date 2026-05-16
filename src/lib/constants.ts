@@ -1,7 +1,7 @@
-// Midnight on October 25 2026 in Lorie's local timezone (browser-resolved)
-export const UNLOCK_DATE = new Date('2026-10-25T00:00:00')
+// Midnight on May 25 2026 in Lorie's local timezone (browser-resolved)
+export const UNLOCK_DATE = new Date('2026-04-25T00:00:00')
 
-export const UNLOCK_DATE_DISPLAY = '10.25.2026'
+export const UNLOCK_DATE_DISPLAY = '4.25.2026'
 
 export const COLORS = {
   locked:       '#1A1A2E',

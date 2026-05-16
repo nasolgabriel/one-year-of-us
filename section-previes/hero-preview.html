@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hero — preview</title>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&family=Nunito:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Nunito', sans-serif; background: #1a1a1a; }
+
+    .bar { display:flex; flex-wrap:wrap; gap:10px; padding:14px 24px; background:#252525; border-bottom:1px solid #333; }
+    .bar-label { width:100%; font-size:10px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:#666; margin-bottom:4px; }
+    .chip { display:flex; align-items:center; gap:7px; font-size:11px; font-family:monospace; color:#aaa; }
+    .sw { width:22px; height:22px; border-radius:4px; border:1px solid rgba(255,255,255,.07); }
+
+    .wrap { display:flex; gap:36px; align-items:flex-start; padding:28px 36px 48px; max-width:1060px; margin:0 auto; }
+
+    /* phone */
+    .phone {
+      position:relative; width:375px; height:780px; flex-shrink:0;
+      border-radius:40px; overflow:hidden;
+      box-shadow:0 28px 90px rgba(0,0,0,.6);
+      background:linear-gradient(175deg,#FFF8EE 0%,#FEF0DC 60%,#FDDFC8 100%);
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      padding:0 24px;
+    }
+    .glow { position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse 70% 55% at 50% 48%,rgba(250,199,117,.2) 0%,transparent 68%); }
+    .bot-tr { position:absolute; top:20px; right:20px; pointer-events:none; opacity:.32; }
+    .bot-bl { position:absolute; bottom:64px; left:16px; pointer-events:none; opacity:.28; }
+
+    /* sparkles */
+    .sparkle-layer { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+    .sparkle { position:absolute; animation:twinkle var(--dur) var(--del) ease-in-out infinite; }
+    .sparkle svg { image-rendering:pixelated; display:block; }
+    @keyframes twinkle {
+      0%,100% { opacity:.04; transform:scale(.6); }
+      50%      { opacity:.45; transform:scale(1.2); }
+    }
+
+    /* bg pixel hearts */
+    .bgh-layer { position:absolute; inset:0; pointer-events:none; }
+    .bgh { position:absolute; animation:bhPulse var(--dur) var(--del) ease-in-out infinite; }
+    .bgh svg { image-rendering:pixelated; display:block; }
+    @keyframes bhPulse {
+      0%,100% { opacity:.07; }
+      50%      { opacity:.18; }
+    }
+
+    /* floating hearts */
+    .hearts-layer { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+    .heart {
+      position:absolute; top:0; font-style:normal; line-height:1;
+      animation:floatUp var(--dur) var(--del) linear infinite;
+    }
+    @keyframes floatUp {
+      0%   { transform:translateY(900px) translateX(0);          opacity:0; }
+      7%   { opacity:var(--op); }
+      88%  { opacity:var(--op); }
+      100% { transform:translateY(-60px) translateX(var(--drift)); opacity:0; }
+    }
+
+    /* content */
+    .content { position:relative; z-index:10; display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; }
+
+    /* ornament */
+    .ornament { display:flex; align-items:center; gap:8px; margin-bottom:2px; }
+    .ornament svg { display:block; }
+    .ornament .ph svg { image-rendering:pixelated; display:block; }
+
+    .title {
+      font-family:'Crimson Text',serif; font-style:italic;
+      font-size:3.1rem; color:#2A1810; letter-spacing:-.02em; line-height:1;
+      animation:fadeUp .9s .18s ease both; opacity:0;
+    }
+    .subtitle {
+      font-family:'Crimson Text',serif; font-style:italic;
+      font-size:1.2rem; color:#C75B2F; letter-spacing:.01em;
+      animation:fadeUp .9s .36s ease both; opacity:0;
+    }
+    .counter-row {
+      display:flex; align-items:flex-end; gap:28px; margin-top:18px;
+      animation:fadeUp .9s .54s ease both; opacity:0;
+    }
+    .counter-pill { display:flex; flex-direction:column; align-items:center; gap:5px; }
+    .counter-num { font-family:'Crimson Text',serif; font-size:3.8rem; color:#2A1810; line-height:1; letter-spacing:-.02em; }
+    .counter-lbl { font-size:9px; letter-spacing:.22em; text-transform:uppercase; color:#F0997B; }
+    .sep { font-family:'Crimson Text',serif; font-style:italic; font-size:2.2rem; color:#FAC775; padding-bottom:10px; }
+
+    /* together badge */
+    .badge-wrap {
+      margin-top:6px;
+      animation:fadeUp .9s .72s ease both; opacity:0;
+    }
+    .badge {
+      position:relative; display:inline-flex; align-items:center; gap:10px;
+      padding:10px 22px 11px;
+      background:rgba(250,199,117,.09);
+      border:1.5px dashed rgba(250,199,117,.5);
+      border-radius:2px;
+    }
+    .badge-corner {
+      position:absolute; width:5px; height:5px; background:#FAC775; opacity:.75;
+    }
+    .badge-corner.tl { top:-2px; left:-2px; }
+    .badge-corner.tr { top:-2px; right:-2px; }
+    .badge-corner.bl { bottom:-2px; left:-2px; }
+    .badge-corner.br { bottom:-2px; right:-2px; }
+    .badge-text {
+      font-family:'Crimson Text',serif; font-style:italic;
+      font-size:1.3rem; color:#2A1810; letter-spacing:.05em; line-height:1;
+    }
+    .badge .ph svg { image-rendering:pixelated; display:block; }
+
+    /* sophie */
+    .sophie {
+      position:absolute; bottom:24px; right:16px; pointer-events:none;
+      animation:breathe 3.8s ease-in-out infinite;
+      transform-origin:bottom center;
+    }
+    .tail { animation:tailTwitch 5s ease-in-out 5s infinite; transform-origin:82px 46px; }
+    @keyframes breathe {
+      0%,100% { transform:scale(1,1) translateY(0); }
+      50%      { transform:scale(1.025,1.04) translateY(-2px); }
+    }
+    @keyframes tailTwitch {
+      0%,100%  { transform:rotate(0deg); }
+      20%      { transform:rotate(4deg); }
+      60%      { transform:rotate(-3deg); }
+      80%      { transform:rotate(0deg); }
+    }
+
+    /* scroll hint */
+    .hint {
+      position:absolute; bottom:28px; left:50%; transform:translateX(-50%);
+      color:#FAC775; font-size:1.1rem; pointer-events:none;
+      animation:fadeIn 1.2s 1.8s ease both, bounce 1.8s 1.8s ease-in-out infinite;
+      opacity:0;
+    }
+
+    @keyframes fadeUp  { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeIn  { to { opacity:1; } }
+    @keyframes bounce  {
+      0%,100% { transform:translateX(-50%) translateY(0); }
+      50%      { transform:translateX(-50%) translateY(7px); }
+    }
+
+    /* annotations */
+    .ann { flex:1; padding-top:4px; }
+    .ann h2 { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.12em; color:#555; margin-bottom:18px; }
+    .ann-row { display:flex; align-items:flex-start; gap:11px; margin-bottom:14px; }
+    .ann-sw { width:20px; height:20px; border-radius:4px; border:1px solid rgba(255,255,255,.08); flex-shrink:0; margin-top:2px; }
+    .ann-text { font-size:12px; line-height:1.6; color:#888; }
+    .ann-text strong { display:block; color:#ddd; }
+    .ann-hex { font-family:monospace; font-size:11px; color:#555; }
+    hr.div { border:none; border-top:1px solid #333; margin:18px 0; }
+    .note { font-size:11px; color:#555; line-height:1.6; padding:10px 12px; border:1px solid #333; border-radius:6px; }
+    .note strong { color:#888; }
+  </style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar-label">Hero — B · sunset peach</div>
+  <div class="chip"><div class="sw" style="background:#2A1810"></div>#2A1810 dusk</div>
+  <div class="chip"><div class="sw" style="background:#C75B2F"></div>#C75B2F ember</div>
+  <div class="chip"><div class="sw" style="background:#F0997B"></div>#F0997B peach</div>
+  <div class="chip"><div class="sw" style="background:#FAC775"></div>#FAC775 honey</div>
+  <div class="chip"><div class="sw" style="background:#FFF8EE;border-color:rgba(0,0,0,.15)"></div>#FFF8EE cream</div>
+</div>
+
+<div class="wrap">
+  <div class="phone">
+    <div class="glow"></div>
+
+    <!-- botanical corners -->
+    <div class="bot-tr">
+      <svg width="90" height="90" viewBox="0 0 90 90" fill="none">
+        <path d="M 78 8 Q 55 30 28 76" stroke="#FAC775" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+        <path d="M 60 22 Q 74 12 80 24 Q 66 30 60 22z" fill="#F0997B"/>
+        <path d="M 46 38 Q 32 24 42 16 Q 52 28 46 38z" fill="#FAC775" opacity=".8"/>
+        <path d="M 34 55 Q 20 46 28 36 Q 40 44 34 55z" fill="#F0997B" opacity=".65"/>
+        <circle cx="78" cy="8" r="3.5" fill="#C75B2F" opacity=".55"/>
+        <circle cx="78" cy="8" r="1.8" fill="#FAC775" opacity=".9"/>
+      </svg>
+    </div>
+    <div class="bot-bl">
+      <svg width="90" height="80" viewBox="0 0 90 80" fill="none">
+        <path d="M 12 72 Q 38 44 64 8" stroke="#FAC775" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+        <path d="M 22 58 Q 7 50 12 38 Q 26 46 22 58z" fill="#F0997B"/>
+        <path d="M 40 40 Q 26 26 36 17 Q 48 28 40 40z" fill="#FAC775" opacity=".8"/>
+        <path d="M 56 20 Q 46 8 56 2 Q 64 12 56 20z" fill="#F0997B" opacity=".65"/>
+        <circle cx="64" cy="8" r="3.5" fill="#C75B2F" opacity=".5"/>
+        <circle cx="64" cy="8" r="1.8" fill="#FAC775" opacity=".85"/>
+      </svg>
+    </div>
+
+    <div class="sparkle-layer" id="sparkles"></div>
+    <div class="bgh-layer" id="bgh"></div>
+    <div class="hearts-layer" id="hearts"></div>
+
+    <!-- content -->
+    <div class="content">
+      <!-- ornament -->
+      <div class="ornament">
+        <span class="ph"><svg width="10" height="10" viewBox="0 0 7 7" style="image-rendering:pixelated">
+          <rect x="1" y="0" width="2" height="1" fill="#FAC775"/>
+          <rect x="4" y="0" width="2" height="1" fill="#FAC775"/>
+          <rect x="0" y="1" width="7" height="1" fill="#FAC775"/>
+          <rect x="0" y="2" width="7" height="1" fill="#FAC775"/>
+          <rect x="0" y="3" width="7" height="1" fill="#FAC775"/>
+          <rect x="1" y="4" width="5" height="1" fill="#FAC775"/>
+          <rect x="2" y="5" width="3" height="1" fill="#FAC775"/>
+          <rect x="3" y="6" width="1" height="1" fill="#FAC775"/>
+        </svg></span>
+        <svg width="100" height="16" viewBox="0 0 100 16" fill="none">
+          <line x1="0" y1="8" x2="38" y2="8" stroke="#FAC775" stroke-width=".75" opacity=".55"/>
+          <path d="M 50 3 L 55 8 L 50 13 L 45 8 Z" fill="#FAC775" opacity=".7"/>
+          <path d="M 50 5 L 54 8 L 50 11 L 46 8 Z" fill="#C75B2F" opacity=".4"/>
+          <line x1="62" y1="8" x2="100" y2="8" stroke="#FAC775" stroke-width=".75" opacity=".55"/>
+        </svg>
+        <span class="ph"><svg width="10" height="10" viewBox="0 0 7 7" style="image-rendering:pixelated">
+          <rect x="1" y="0" width="2" height="1" fill="#FAC775"/>
+          <rect x="4" y="0" width="2" height="1" fill="#FAC775"/>
+          <rect x="0" y="1" width="7" height="1" fill="#FAC775"/>
+          <rect x="0" y="2" width="7" height="1" fill="#FAC775"/>
+          <rect x="0" y="3" width="7" height="1" fill="#FAC775"/>
+          <rect x="1" y="4" width="5" height="1" fill="#FAC775"/>
+          <rect x="2" y="5" width="3" height="1" fill="#FAC775"/>
+          <rect x="3" y="6" width="1" height="1" fill="#FAC775"/>
+        </svg></span>
+      </div>
+
+      <h1 class="title">one year of us</h1>
+      <p class="subtitle">for Rie ♡</p>
+
+      <div class="counter-row">
+        <div class="counter-pill">
+          <span class="counter-num" id="days">0</span>
+          <span class="counter-lbl">days</span>
+        </div>
+        <span class="sep">·</span>
+        <div class="counter-pill">
+          <span class="counter-num" id="hours">0</span>
+          <span class="counter-lbl">hours</span>
+        </div>
+      </div>
+
+      <!-- together badge -->
+      <div class="badge-wrap">
+        <div class="badge">
+          <div class="badge-corner tl"></div>
+          <div class="badge-corner tr"></div>
+          <div class="badge-corner bl"></div>
+          <div class="badge-corner br"></div>
+          <span class="ph"><svg width="13" height="13" viewBox="0 0 7 7" style="image-rendering:pixelated">
+            <rect x="1" y="0" width="2" height="1" fill="#C75B2F"/>
+            <rect x="4" y="0" width="2" height="1" fill="#C75B2F"/>
+            <rect x="0" y="1" width="7" height="1" fill="#C75B2F"/>
+            <rect x="0" y="2" width="7" height="1" fill="#C75B2F"/>
+            <rect x="0" y="3" width="7" height="1" fill="#C75B2F"/>
+            <rect x="1" y="4" width="5" height="1" fill="#C75B2F"/>
+            <rect x="2" y="5" width="3" height="1" fill="#C75B2F"/>
+            <rect x="3" y="6" width="1" height="1" fill="#C75B2F"/>
+          </svg></span>
+          <span class="badge-text">together and counting</span>
+          <span class="ph"><svg width="13" height="13" viewBox="0 0 7 7" style="image-rendering:pixelated">
+            <rect x="1" y="0" width="2" height="1" fill="#C75B2F"/>
+            <rect x="4" y="0" width="2" height="1" fill="#C75B2F"/>
+            <rect x="0" y="1" width="7" height="1" fill="#C75B2F"/>
+            <rect x="0" y="2" width="7" height="1" fill="#C75B2F"/>
+            <rect x="0" y="3" width="7" height="1" fill="#C75B2F"/>
+            <rect x="1" y="4" width="5" height="1" fill="#C75B2F"/>
+            <rect x="2" y="5" width="3" height="1" fill="#C75B2F"/>
+            <rect x="3" y="6" width="1" height="1" fill="#C75B2F"/>
+          </svg></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- sophie -->
+    <div class="sophie">
+      <svg width="100" height="84" viewBox="0 0 100 84" fill="none">
+        <ellipse cx="50" cy="80" rx="38" ry="5" fill="rgba(199,91,47,0.09)"/>
+        <path class="tail" d="M 82 46 Q 94 30 84 16 Q 74 6 60 14 Q 52 20 56 32"
+              stroke="#F0997B" stroke-width="9" stroke-linecap="round" fill="none"/>
+        <ellipse cx="48" cy="56" rx="38" ry="24" fill="#F0997B"/>
+        <circle cx="24" cy="32" r="18" fill="#F0997B"/>
+        <polygon points="12,20 17,7 25,20" fill="#F0997B"/>
+        <polygon points="24,20 32,7 37,20" fill="#F0997B"/>
+        <polygon points="14.5,19 18,11 23.5,19" fill="#FAC775" opacity=".65"/>
+        <polygon points="25,19 30,11 34.5,19" fill="#FAC775" opacity=".65"/>
+        <path d="M 20 54 Q 48 47 76 54" stroke="#D97A52" stroke-width="1.6" opacity=".28" stroke-linecap="round" fill="none"/>
+        <path d="M 18 63 Q 46 56 74 62" stroke="#D97A52" stroke-width="1.5" opacity=".24" stroke-linecap="round" fill="none"/>
+        <path d="M 20 71 Q 46 65 72 70" stroke="#D97A52" stroke-width="1.4" opacity=".2"  stroke-linecap="round" fill="none"/>
+        <path d="M 15 32 Q 19 36.5 24 32" stroke="#2A1810" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+        <path d="M 23 37 L 24.5 40 L 26 37" fill="#C75B2F" opacity=".35"/>
+        <ellipse cx="32" cy="74" rx="12" ry="5.5" fill="#F0997B"/>
+        <ellipse cx="50" cy="76" rx="11" ry="5"   fill="#F0997B"/>
+        <circle cx="28" cy="75" r="2.2" fill="#FAC775" opacity=".45"/>
+        <circle cx="34" cy="76" r="2.2" fill="#FAC775" opacity=".45"/>
+        <circle cx="47" cy="77" r="2.2" fill="#FAC775" opacity=".45"/>
+        <circle cx="54" cy="76" r="2.2" fill="#FAC775" opacity=".45"/>
+      </svg>
+    </div>
+
+    <div class="hint">↓</div>
+  </div>
+
+  <!-- annotations -->
+  <div class="ann">
+    <h2>What's new</h2>
+    <div class="ann-row">
+      <div class="ann-sw" style="image-rendering:pixelated;background:#C75B2F"></div>
+      <div class="ann-text"><strong>Pixel hearts (7×7 grid SVG)</strong>Ornament sides, badge flanking, background accents<br/><span class="ann-hex">image-rendering: pixelated — no blur on scale</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-sw" style="background:#333"></div>
+      <div class="ann-text"><strong>Pixel cross sparkles</strong>Replace smooth dots — 5×5 grid cross shapes, twinkling</div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-sw" style="background:rgba(250,199,117,.09);border:1.5px dashed rgba(250,199,117,.5)"></div>
+      <div class="ann-text">
+        <strong>"together and counting" badge</strong>
+        Dashed border + pixel corner squares<br/>
+        Bigger font — 1.3rem serif italic<br/>
+        <span class="ann-hex">ember pixel hearts ♥ flanking</span>
+      </div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-sw" style="background:#333"></div>
+      <div class="ann-text"><strong>6 faint BG pixel hearts</strong>Fixed positions, gentle pulse — adds depth without noise</div>
+    </div>
+    <hr class="div"/>
+    <div class="note">
+      <strong>Parallax on scroll</strong> — pnpm dev only.<br/>
+      bg 12% · content 18% + fade · hint fade at 20%.
+    </div>
+  </div>
+</div>
+
+<script>
+  const UNLOCK = new Date('2026-10-25T00:00:00').getTime()
+  function updateCounter() {
+    const diff = Date.now() - UNLOCK
+    if (diff <= 0) return
+    const h = Math.floor(diff / 3600000)
+    document.getElementById('days').textContent  = Math.floor(h / 24)
+    document.getElementById('hours').textContent = h % 24
+  }
+  updateCounter(); setInterval(updateCounter, 60000)
+
+  // pixel sparkles
+  const SPARKLES = Array.from({ length: 16 }, (_, i) => ({
+    x:(i*53.7+8)%90+5, y:(i*37.2+15)%84+8, size:6+(i%3)*3,
+    delay:(i*.55)%3.5, dur:2+(i%4)*.8, warm:i%3!==2,
+  }))
+  const sl = document.getElementById('sparkles')
+  SPARKLES.forEach(s => {
+    const d = document.createElement('div')
+    d.className = 'sparkle'
+    const c = s.warm ? '#FAC775' : '#F0997B'
+    d.style.cssText = `left:${s.x}%;top:${s.y}%;width:${s.size}px;height:${s.size}px;--dur:${s.dur}s;--del:${s.delay}s;`
+    d.innerHTML = `<svg width="${s.size}" height="${s.size}" viewBox="0 0 5 5" style="image-rendering:pixelated"><rect x="2" y="0" width="1" height="5" fill="${c}"/><rect x="0" y="2" width="5" height="1" fill="${c}"/></svg>`
+    sl.appendChild(d)
+  })
+
+  // bg pixel hearts
+  const BG_HEARTS = [{x:7,y:12,s:12},{x:88,y:22,s:10},{x:13,y:62,s:14},{x:84,y:68,s:12},{x:46,y:6,s:10},{x:52,y:86,s:12}]
+  const bl = document.getElementById('bgh')
+  BG_HEARTS.forEach((h, i) => {
+    const d = document.createElement('div')
+    d.className = 'bgh'
+    d.style.cssText = `left:${h.x}%;top:${h.y}%;--dur:${5+i*.8}s;--del:${i*.6}s;`
+    d.innerHTML = `<svg width="${h.s}" height="${h.s}" viewBox="0 0 7 7" style="image-rendering:pixelated"><rect x="1" y="0" width="2" height="1" fill="#C75B2F"/><rect x="4" y="0" width="2" height="1" fill="#C75B2F"/><rect x="0" y="1" width="7" height="1" fill="#C75B2F"/><rect x="0" y="2" width="7" height="1" fill="#C75B2F"/><rect x="0" y="3" width="7" height="1" fill="#C75B2F"/><rect x="1" y="4" width="5" height="1" fill="#C75B2F"/><rect x="2" y="5" width="3" height="1" fill="#C75B2F"/><rect x="3" y="6" width="1" height="1" fill="#C75B2F"/></svg>`
+    bl.appendChild(d)
+  })
+
+  // floating hearts
+  const HEARTS = Array.from({ length: 14 }, (_, i) => ({
+    x:(i*71.3+5)%88+6, size:7+(i%4)*3, op:0.13+(i%5)*.05,
+    dur:10+(i%5)*3.5, delay:i<6?i*.6:(i*1.3)%8, drift:(i%3-1)*30,
+  }))
+  const hl = document.getElementById('hearts')
+  HEARTS.forEach(h => {
+    const s = document.createElement('span')
+    s.className = 'heart'
+    s.textContent = '♡'
+    s.style.cssText = `left:${h.x}%;font-size:${h.size}px;color:#C75B2F;--dur:${h.dur}s;--del:${h.delay}s;--op:${h.op};--drift:${h.drift}px;`
+    hl.appendChild(s)
+  })
+</script>
+</body>
+</html>

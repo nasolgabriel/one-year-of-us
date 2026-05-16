@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Locked Hero — Strawberry Padlock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&family=Nunito:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0d0d0d;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    gap: 1.5rem;
+    font-family: 'Nunito', sans-serif;
+  }
+
+  .label {
+    font-size: 10px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: #444;
+  }
+
+  /* ── Phone frame ─────────────────────────────── */
+  .phone {
+    width: 375px;
+    height: 812px;
+    border-radius: 44px;
+    overflow: hidden;
+    position: relative;
+    border: 1.5px solid rgba(255,255,255,0.07);
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.8),
+      0 40px 120px rgba(0,0,0,0.8),
+      0 0 80px rgba(226,75,106,0.06);
+  }
+
+  /* ── Scene ───────────────────────────────────── */
+  .scene {
+    background: #141228;
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+    gap: 2.25rem;
+    padding: 2rem 2rem 3rem;
+  }
+
+  /* Strawberry center glow */
+  .glow-center {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 58% 42% at 50% 46%, rgba(226,75,106,0.13) 0%, rgba(92,75,138,0.07) 55%, transparent 72%);
+  }
+
+  /* Edge vignette */
+  .vignette {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 105% 85% at 50% 50%, transparent 42%, rgba(0,0,0,0.55) 100%);
+  }
+
+  /* Subtle top radial — pulls eye down */
+  .top-shade {
+    position: absolute; top: 0; left: 0; right: 0; height: 220px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.28) 0%, transparent 100%);
+    pointer-events: none;
+  }
+
+  /* ── Stars ───────────────────────────────────── */
+  .stars { position: absolute; inset: 0; pointer-events: none; }
+  .star {
+    position: absolute; border-radius: 50%; background: #fff;
+    animation: twinkle var(--d) ease-in-out infinite;
+    animation-delay: var(--dl);
+  }
+  @keyframes twinkle {
+    0%,100% { opacity: var(--lo); }
+    50%      { opacity: var(--hi); }
+  }
+
+  /* ── Halos ───────────────────────────────────── */
+  .lock-wrap {
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2;
+  }
+  .halo {
+    position: absolute; border-radius: 50%;
+    border: 1px solid rgba(226,75,106,0.18);
+    pointer-events: none;
+  }
+  .halo-outer {
+    width: 210px; height: 210px;
+    animation: pulse 5s ease-in-out infinite;
+  }
+  .halo-mid {
+    width: 155px; height: 155px;
+    border-color: rgba(226,75,106,0.12);
+    animation: pulse 5s ease-in-out infinite;
+    animation-delay: -.8s;
+  }
+  .halo-inner {
+    width: 106px; height: 106px;
+    border-color: rgba(226,75,106,0.22);
+    animation: pulse 5s ease-in-out infinite;
+    animation-delay: -1.6s;
+  }
+  @keyframes pulse {
+    0%,100% { transform: scale(1);    opacity: .65; }
+    50%      { transform: scale(1.1); opacity: .2; }
+  }
+
+  /* Padlock SVG breath */
+  .lock-svg {
+    animation: breathe 5.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 28px rgba(226,75,106,0.38))
+            drop-shadow(0 0 8px  rgba(226,75,106,0.2));
+  }
+  @keyframes breathe {
+    0%,100% { transform: scale(1); }
+    50%      { transform: scale(1.035); }
+  }
+
+  /* ── Tiles ───────────────────────────────────── */
+  .tiles {
+    display: flex;
+    gap: .55rem;
+    z-index: 2;
+  }
+  .tile {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(226,75,106,0.07);
+    border: 1px solid rgba(226,75,106,0.25);
+    border-radius: 12px;
+    padding: .8rem .9rem .65rem;
+    min-width: 70px;
+    gap: .3rem;
+  }
+  .tile .num {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 600;
+    font-size: 1.75rem;
+    color: #E24B6A;
+    letter-spacing: .04em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .tile .unit {
+    font-size: 9px;
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    color: rgba(226,75,106,0.55);
+  }
+
+  /* ── Text ────────────────────────────────────── */
+  .tagline {
+    font-family: 'Crimson Text', serif;
+    font-style: italic;
+    font-size: 1.25rem;
+    color: #FF8FA4;
+    letter-spacing: .01em;
+    text-align: center;
+    z-index: 2;
+    line-height: 1.5;
+  }
+
+  .hint {
+    font-family: 'Crimson Text', serif;
+    font-style: italic;
+    font-size: .9rem;
+    color: rgba(255,143,164,0.5);
+    letter-spacing: .025em;
+    z-index: 2;
+    text-align: center;
+  }
+
+  .scroll-lock {
+    position: absolute;
+    bottom: 1.75rem;
+    font-size: 9px;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    color: rgba(92,75,138,0.6);
+    z-index: 2;
+  }
+</style>
+</head>
+<body>
+
+<p class="label">locked hero — strawberry padlock</p>
+
+<div class="phone">
+  <div class="scene">
+
+    <div class="glow-center"></div>
+    <div class="vignette"></div>
+    <div class="top-shade"></div>
+    <div class="stars" id="stars"></div>
+
+    <!-- Padlock + halos -->
+    <div class="lock-wrap">
+      <div class="halo halo-outer"></div>
+      <div class="halo halo-mid"></div>
+      <div class="halo halo-inner"></div>
+
+      <svg class="lock-svg" viewBox="0 0 64 80" fill="none"
+        style="width:96px;height:auto;display:block;overflow:visible">
+        <!-- Shackle -->
+        <path
+          d="M 18 30 V 20 a 14 14 0 0 1 28 0 V 30"
+          stroke="#E24B6A" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <!-- Body -->
+        <rect x="9.5" y="28" width="45" height="40" rx="7"
+          fill="#1e0d18" stroke="#E24B6A" stroke-width="2.5"/>
+        <!-- Keyhole circle -->
+        <circle cx="32" cy="44" r="4.2" stroke="#E24B6A" stroke-width="2.4" fill="none"/>
+        <!-- Keyhole stem -->
+        <rect x="30.8" y="46.5" width="2.4" height="8" rx="1.2" fill="#E24B6A"/>
+        <!-- Heart inscription -->
+        <path
+          d="M 32 60 m -3 -1 c -1.5 -1.5 -3.5 0 -1.5 2 c 0.5 0.5 4.5 4 4.5 4 c 0 0 4 -3.5 4.5 -4 c 2 -2 0 -3.5 -1.5 -2 c -0.7 0.7 -1.7 0.7 -3 0 z"
+          fill="#E24B6A" opacity="0.45"/>
+      </svg>
+    </div>
+
+    <!-- Tagline -->
+    <p class="tagline">something awaits for you…</p>
+
+    <!-- Countdown -->
+    <div class="tiles">
+      <div class="tile"><span class="num" id="t-d">00</span><span class="unit">days</span></div>
+      <div class="tile"><span class="num" id="t-h">00</span><span class="unit">hrs</span></div>
+      <div class="tile"><span class="num" id="t-m">00</span><span class="unit">min</span></div>
+      <div class="tile"><span class="num" id="t-s">00</span><span class="unit">sec</span></div>
+    </div>
+
+    <!-- Date hint -->
+    <p class="hint">unlocks at midnight &ensp;·&ensp; 4.25.2026</p>
+
+    <p class="scroll-lock">scroll is locked &ensp;✕</p>
+  </div>
+</div>
+
+<script>
+  // Stars
+  const c = document.getElementById('stars')
+  for (let i = 0; i < 150; i++) {
+    const s = document.createElement('div')
+    s.className = 'star'
+    const x   = (i * 137.508) % 100
+    const y   = (i * 79.317 + i * i * 0.031) % 100
+    const sz  = 0.5 + (i % 3) * 0.55
+    const lo  = 0.04 + (i % 8) * 0.045
+    const hi  = Math.min(lo + 0.2 + (i % 5) * 0.07, 0.72)
+    const dur = (2 + (i % 7) * 0.65).toFixed(2)
+    const dl  = ((i * 0.17) % parseFloat(dur)).toFixed(2)
+    s.style.cssText = `left:${x}%;top:${y}%;width:${sz}px;height:${sz}px;--lo:${lo};--hi:${hi};--d:${dur}s;--dl:${dl}s`
+    c.appendChild(s)
+  }
+
+  // Countdown
+  function pad(n) { return String(n).padStart(2, '0') }
+  function tick() {
+    const diff = Math.max(new Date('2026-04-25T00:00:00').getTime() - Date.now(), 0)
+    const ts = Math.floor(diff / 1000)
+    document.getElementById('t-d').textContent = pad(Math.floor(ts / 86400))
+    document.getElementById('t-h').textContent = pad(Math.floor(ts / 3600) % 24)
+    document.getElementById('t-m').textContent = pad(Math.floor(ts / 60) % 60)
+    document.getElementById('t-s').textContent = pad(ts % 60)
+  }
+  tick()
+  setInterval(tick, 1000)
+</script>
+</body>
+</html>

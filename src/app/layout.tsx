@@ -1,18 +1,26 @@
 import type { Metadata } from 'next'
-import { Fraunces, Inter } from 'next/font/google'
+import { Crimson_Text, Nunito, Great_Vibes } from 'next/font/google'
 import './globals.css'
 
-const fraunces = Fraunces({
+const crimsonText = Crimson_Text({
   subsets: ['latin'],
-  variable: '--font-fraunces',
+  variable: '--font-crimson-text',
   display: 'swap',
   style: ['normal', 'italic'],
+  weight: ['400', '600', '700'],
 })
 
-const inter = Inter({
+const nunito = Nunito({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-nunito',
   display: 'swap',
+})
+
+const greatVibes = Great_Vibes({
+  subsets: ['latin'],
+  variable: '--font-great-vibes',
+  display: 'swap',
+  weight: '400',
 })
 
 export const metadata: Metadata = {
@@ -22,8 +30,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${inter.variable} h-full`}>
-      <body className="min-h-full bg-locked antialiased">{children}</body>
+    <html lang="en" className={`${crimsonText.variable} ${nunito.variable} ${greatVibes.variable} h-full`}>
+      <body className="min-h-full bg-locked antialiased" suppressHydrationWarning>{children}</body>
     </html>
   )
 }
