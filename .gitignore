@@ -45,3 +45,6 @@ next-env.d.ts
 
 # IDEs and editors
 .vscode
+
+# claude files
+CLAUDE.md
