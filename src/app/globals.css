@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* Peeling album cards fly off to x:128% / y:-128%; clip the horizontal axis so
+   they can't widen the page and expose the dark body background on a sideways
+   swipe. `clip` (not `hidden`) avoids creating a scroll container that would
+   break the sticky scroll sections. */
+html,
+body {
+  overflow-x: clip;
+}
+
 @theme inline {
   /* Fonts — resolved at runtime via next/font CSS vars */
   --font-serif: var(--font-crimson-text), Georgia, serif;

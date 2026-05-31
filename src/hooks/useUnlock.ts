@@ -33,10 +33,15 @@ export function useUnlock() {
       document.cookie = 'oneyearofus_unlocked=; path=/; max-age=0'
     }
 
-    // ?bypass skips the overlay without persisting — regular visits still see the lock
+    // ?bypass plays the full seal → unlock animation without persisting — regular
+    // visits still see the lock (and the countdown if the date hasn't passed yet).
     if (params.includes('bypass')) {
-      setState('unlocked')
-      return
+      const t1 = setTimeout(() => setState('unlocking'), SEAL_REVEAL_MS)
+      const t2 = setTimeout(() => setState('unlocked'), SEAL_REVEAL_MS + UNLOCK_ANIMATION_MS)
+      return () => {
+        clearTimeout(t1)
+        clearTimeout(t2)
+      }
     }
 
     // Repeat visit — already unlocked, skip the whole thing

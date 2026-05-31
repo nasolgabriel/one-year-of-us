@@ -122,7 +122,7 @@ function ScrubAlbum() {
 
   return (
     <section ref={ref} style={{ height: '700vh', position: 'relative', background: P.bg }}>
-      <div className="sticky top-0 h-dvh">
+      <div className="sticky top-0 h-dvh overflow-hidden">
         <div className="absolute left-0 right-0 top-[12dvh] flex justify-center px-6">
           <Label>our year, one at a time</Label>
         </div>
@@ -302,7 +302,7 @@ function SwipeAlbum() {
   const done = index >= total
 
   return (
-    <section ref={sectionRef} style={{ height: '100dvh', position: 'relative', background: P.bg }}>
+    <section ref={sectionRef} style={{ height: '100dvh', position: 'relative', background: P.bg, overflow: 'hidden' }}>
       <div className="absolute left-0 right-0 top-[12dvh] flex justify-center px-6">
         <Label>our year, one at a time</Label>
       </div>
