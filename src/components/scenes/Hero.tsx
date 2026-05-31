@@ -344,11 +344,14 @@ export default function Hero() {
         aria-hidden
       />
 
-      {/* Vignette edges */}
+      {/* Ambient gradients — warm glow, center radial, and top/bottom vignette all
+          baked into one static layer to cut full-screen composite passes on mobile. */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background: `
+            radial-gradient(ellipse 52% 26% at 50% 38%, rgba(250,199,117,0.28) 0%, rgba(240,153,123,0.12) 45%, transparent 72%),
+            radial-gradient(ellipse 70% 55% at 50% 48%, rgba(250,199,117,0.20) 0%, transparent 68%),
             radial-gradient(ellipse 90% 40% at 50% 0%, rgba(42,24,16,0.06) 0%, transparent 100%),
             radial-gradient(ellipse 90% 30% at 50% 100%, rgba(42,24,16,0.05) 0%, transparent 100%)
           `,
@@ -356,36 +359,14 @@ export default function Hero() {
         aria-hidden
       />
 
-      {/* Warm glow behind title */}
-      <div
-        className="pointer-events-none absolute"
-        style={{
-          top: '38%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 'min(520px, 95vw)',
-          height: 'min(280px, 55vw)',
-          background: `radial-gradient(ellipse at center, rgba(250,199,117,0.28) 0%, rgba(240,153,123,0.12) 45%, transparent 72%)`,
-          filter: 'blur(18px)',
-        }}
-        aria-hidden
-      />
-
-      {/* Center radial ambient */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ background: 'radial-gradient(ellipse 70% 55% at 50% 48%, rgba(250,199,117,0.20) 0%, transparent 68%)' }}
-        aria-hidden
-      />
-
-      {/* Grain texture — baked PNG tile, cheaper than a live feTurbulence filter */}
+      {/* Grain texture — baked PNG tile; plain alpha (no blend mode) so it isn't
+          re-rasterized against the animating particles every frame on mobile. */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           backgroundImage: 'url(/grain.png)',
           backgroundRepeat: 'repeat',
-          opacity: 0.032,
-          mixBlendMode: 'overlay',
+          opacity: 0.05,
         }}
         aria-hidden
       />
