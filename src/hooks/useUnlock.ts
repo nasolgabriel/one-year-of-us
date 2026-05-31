@@ -12,7 +12,7 @@ import {
 export type { TimeRemaining }
 export type UnlockState = 'sealed' | 'unlocking' | 'unlocked'
 
-// Inner content animations for the unlock sequence (shackle, petals, lock fade)
+
 export const UNLOCK_ANIMATION_MS = 2400
 // Brief pause so first-time post-date visitors see the seal before it pops
 const SEAL_REVEAL_MS = 700
@@ -27,6 +27,13 @@ export function useUnlock() {
   })
 
   useEffect(() => {
+    // ?reset in the URL clears the stored unlock so the sequence can be replayed
+    // for testing (e.g. http://localhost:3000/?reset)
+    if (window.location.search.includes('reset')) {
+      localStorage.removeItem('oneyearofus_unlocked')
+      document.cookie = 'oneyearofus_unlocked=; path=/; max-age=0'
+    }
+
     // Repeat visit — already unlocked, skip the whole thing
     if (getStoredUnlock()) {
       setState('unlocked')

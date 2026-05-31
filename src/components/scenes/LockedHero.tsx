@@ -123,7 +123,7 @@ function CountdownTile({ value, label }: { value: string; label: string }) {
       }}
     >
       <span
-        className="tabular-nums font-semibold leading-none"
+        className="font-serif tabular-nums font-semibold leading-none"
         style={{
           fontSize: 'clamp(1.6rem, 2.4vw, 2.4rem)',
           color: C.strawberry,
@@ -133,7 +133,7 @@ function CountdownTile({ value, label }: { value: string; label: string }) {
         {value}
       </span>
       <span
-        className="uppercase leading-none"
+        className="font-sans uppercase leading-none"
         style={{
           fontSize: 'clamp(9px, 0.7vw, 11px)',
           letterSpacing: '0.24em',

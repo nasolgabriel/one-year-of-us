@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Crimson_Text, Nunito, Great_Vibes } from 'next/font/google'
+import SmoothScroll from '@/components/SmoothScroll'
 import './globals.css'
 
 const crimsonText = Crimson_Text({
@@ -31,7 +32,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${crimsonText.variable} ${nunito.variable} ${greatVibes.variable} h-full`}>
-      <body className="min-h-full bg-locked antialiased" suppressHydrationWarning>{children}</body>
+      <body className="min-h-full bg-locked antialiased" suppressHydrationWarning>
+        <SmoothScroll>{children}</SmoothScroll>
+      </body>
     </html>
   )
 }

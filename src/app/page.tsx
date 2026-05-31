@@ -2,25 +2,33 @@
 
 import { useEffect } from 'react'
 import { AnimatePresence } from 'framer-motion'
+import { useLenis } from 'lenis/react'
 import { useUnlock } from '@/hooks/useUnlock'
 import LockedHero from '@/components/scenes/LockedHero'
 import Hero from '@/components/scenes/Hero'
+import BeforeBeginning from '@/components/scenes/BeforeBeginning'
+import Album from '@/components/scenes/Album'
 
 export default function Home() {
   const { state, timeRemaining } = useUnlock()
+  const lenis = useLenis()
   const showOverlay = state !== 'unlocked'
 
-  // Lock body scroll while the overlay is up; restore once dissolved
   useEffect(() => {
     document.body.style.overflow = showOverlay ? 'hidden' : ''
+    if (showOverlay) lenis?.stop()
+    else lenis?.start()
     return () => {
       document.body.style.overflow = ''
+      lenis?.start()
     }
-  }, [showOverlay])
+  }, [showOverlay, lenis])
 
   return (
     <main className="relative">
       <Hero />
+      <BeforeBeginning />
+      <Album />
 
       <AnimatePresence>
         {showOverlay && (
