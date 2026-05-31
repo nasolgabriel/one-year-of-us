@@ -14,7 +14,6 @@ export type UnlockState = 'sealed' | 'unlocking' | 'unlocked'
 
 
 export const UNLOCK_ANIMATION_MS = 2400
-// Brief pause so first-time post-date visitors see the seal before it pops
 const SEAL_REVEAL_MS = 700
 
 export function useUnlock() {
@@ -27,11 +26,17 @@ export function useUnlock() {
   })
 
   useEffect(() => {
-    // ?reset in the URL clears the stored unlock so the sequence can be replayed
-    // for testing (e.g. http://localhost:3000/?reset)
-    if (window.location.search.includes('reset')) {
+    const params = window.location.search
+
+    if (params.includes('reset')) {
       localStorage.removeItem('oneyearofus_unlocked')
       document.cookie = 'oneyearofus_unlocked=; path=/; max-age=0'
+    }
+
+    // ?bypass skips the overlay without persisting — regular visits still see the lock
+    if (params.includes('bypass')) {
+      setState('unlocked')
+      return
     }
 
     // Repeat visit — already unlocked, skip the whole thing

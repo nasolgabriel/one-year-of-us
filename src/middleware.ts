@@ -6,8 +6,9 @@ const STORAGE_KEY = 'oneyearofus_unlocked'
 export function middleware(request: NextRequest) {
   const unlocked = request.cookies.get(STORAGE_KEY)?.value === 'true'
 
-  const { pathname } = request.nextUrl
-  if (!unlocked && pathname !== '/' && !pathname.startsWith('/demo')) {
+  const { pathname, search } = request.nextUrl
+  const isBypass = search.includes('bypass')
+  if (!unlocked && !isBypass && pathname !== '/' && !pathname.startsWith('/demo')) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
