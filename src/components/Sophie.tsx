@@ -1,6 +1,5 @@
 'use client'
 
-import { m } from 'framer-motion'
 
 // Sophie — white + ginger bicolor cat, curled asleep.
 const C = {
@@ -34,31 +33,29 @@ function SleepingCat() {
         { left: 105, top: 8, size: 11, delay: 1.3 },
         { left: 116, top: -4, size: 14, delay: 2.6 },
       ] as { left: number; top: number; size: number; delay: number }[]).map((z, i) => (
-        <m.span
+        <span
           key={i}
           className="absolute select-none leading-none font-sans"
-          style={{ left: z.left, top: z.top, fontSize: z.size, color: C.zColor }}
-          animate={{ y: [0, -20, -34], opacity: [0, 0.6, 0] }}
-          transition={{
-            duration: 2.7, delay: z.delay,
-            repeat: Infinity, repeatDelay: 4,
-            ease: 'easeOut',
+          style={{
+            left: z.left, top: z.top, fontSize: z.size, color: C.zColor,
+            willChange: 'transform, opacity',
+            animation: `sophie-z 6.7s ease-out ${z.delay}s infinite`,
           }}
         >
           z
-        </m.span>
+        </span>
       ))}
 
-      <m.svg
+      <svg
         width={132} height={104}
         viewBox="0 0 132 104"
         fill="none"
         style={{
           display: 'block', position: 'absolute', bottom: 0, left: 0,
           overflow: 'visible', transformOrigin: '66px 96px',
+          willChange: 'transform',
+          animation: 'sophie-breathe 3.8s ease-in-out infinite',
         }}
-        animate={{ scaleY: [1, 1.035, 1], y: [0, -2, 0] }}
-        transition={{ duration: 3.8, repeat: Infinity, ease: 'easeInOut' }}
       >
         {/* ground shadow */}
         <ellipse cx={64} cy={97} rx={52} ry={6} fill={C.shadow} />
@@ -129,7 +126,7 @@ function SleepingCat() {
         <ellipse cx={70} cy={86} rx={11} ry={7} fill={C.white} stroke={C.outline} strokeWidth={2} />
         <ellipse cx={88} cy={88} rx={11} ry={7} fill={C.white} stroke={C.outline} strokeWidth={2} />
         <path d="M 70 81 L 70 86 M 88 83 L 88 88" stroke={C.outline} strokeWidth={1.3} strokeLinecap="round" opacity={0.5} />
-      </m.svg>
+      </svg>
     </div>
   )
 }

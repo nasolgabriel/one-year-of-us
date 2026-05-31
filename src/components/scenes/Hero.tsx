@@ -84,18 +84,19 @@ function FloatingHearts() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
       {HEARTS.map((h, i) => (
-        <m.span
+        <span
           key={i}
           className="absolute select-none leading-none"
-          style={{ left: `${h.x}%`, top: 0, fontSize: h.size, color: P.ember }}
-          animate={{ y: [950, -60], x: [0, h.drift], opacity: [0, h.maxOpacity, h.maxOpacity, 0] }}
-          transition={{
-            duration: h.duration, delay: h.delay, repeat: Infinity, ease: 'linear',
-            opacity: { times: [0, 0.07, 0.88, 1] },
-          }}
+          style={{
+            left: `${h.x}%`, top: 0, fontSize: h.size, color: P.ember,
+            willChange: 'transform, opacity',
+            '--drift': `${h.drift}px`,
+            '--maxop': h.maxOpacity,
+            animation: `hero-heart-rise ${h.duration}s linear ${h.delay}s infinite`,
+          } as React.CSSProperties}
         >
           ♡
-        </m.span>
+        </span>
       ))}
     </div>
   )
@@ -105,18 +106,20 @@ function PixelSparkles() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
       {PIXEL_SPARKLES.map((s, i) => (
-        <m.div
+        <div
           key={i}
           className="absolute"
-          style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.size, height: s.size }}
-          animate={{ opacity: [0.03, 0.38, 0.03], scale: [0.7, 1.15, 0.7] }}
-          transition={{ duration: s.duration, delay: s.delay, repeat: Infinity, ease: 'easeInOut' }}
+          style={{
+            left: `${s.x}%`, top: `${s.y}%`, width: s.size, height: s.size,
+            willChange: 'transform, opacity',
+            animation: `hero-sparkle ${s.duration}s ease-in-out ${s.delay}s infinite`,
+          }}
         >
           <svg width={s.size} height={s.size} viewBox="0 0 5 5" style={{ imageRendering: 'pixelated' }}>
             <rect x="2" y="0" width="1" height="5" fill={s.warm ? P.honey : P.peach} />
             <rect x="0" y="2" width="5" height="1" fill={s.warm ? P.honey : P.peach} />
           </svg>
-        </m.div>
+        </div>
       ))}
     </div>
   )
@@ -126,15 +129,17 @@ function BgPixelHearts() {
   return (
     <div className="pointer-events-none absolute inset-0" aria-hidden>
       {BG_HEARTS.map((h, i) => (
-        <m.div
+        <div
           key={i}
           className="absolute"
-          style={{ left: `${h.x}%`, top: `${h.y}%` }}
-          animate={{ opacity: [0.05, 0.14, 0.05] }}
-          transition={{ duration: 6 + i * 0.8, repeat: Infinity, ease: 'easeInOut', delay: i * 0.6 }}
+          style={{
+            left: `${h.x}%`, top: `${h.y}%`,
+            willChange: 'opacity',
+            animation: `hero-bgheart ${6 + i * 0.8}s ease-in-out ${i * 0.6}s infinite`,
+          }}
         >
           <PixelHeart size={h.size} color={P.ember} />
-        </m.div>
+        </div>
       ))}
     </div>
   )

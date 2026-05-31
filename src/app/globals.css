@@ -25,3 +25,37 @@
   --color-twilight:      #72243E;
   --color-twilight-dark: #4B1528;
 }
+
+/* Ambient loops run as compositor-thread CSS animations (transform/opacity only)
+   instead of Framer's main-thread rAF — keeps the hero smooth on mobile under
+   load (reload, font swap) without thinning out the particle density.
+   Per-element timing/offsets ride in via the --* custom properties. */
+@keyframes hero-heart-rise {
+  0%   { transform: translate3d(0, 950px, 0);            opacity: 0; }
+  7%   { opacity: var(--maxop); }
+  88%  { opacity: var(--maxop); }
+  100% { transform: translate3d(var(--drift), -60px, 0); opacity: 0; }
+}
+
+@keyframes hero-sparkle {
+  0%, 100% { transform: scale(0.7);  opacity: 0.03; }
+  50%      { transform: scale(1.15); opacity: 0.38; }
+}
+
+@keyframes hero-bgheart {
+  0%, 100% { opacity: 0.05; }
+  50%      { opacity: 0.14; }
+}
+
+/* Sophie's "z" puff — active for the first 40% then idle (emulates repeatDelay). */
+@keyframes sophie-z {
+  0%   { transform: translate3d(0, 0, 0);     opacity: 0; }
+  20%  { opacity: 0.6; }
+  40%  { transform: translate3d(0, -34px, 0); opacity: 0; }
+  100% { transform: translate3d(0, -34px, 0); opacity: 0; }
+}
+
+@keyframes sophie-breathe {
+  0%, 100% { transform: translate3d(0, 0, 0)    scaleY(1); }
+  50%      { transform: translate3d(0, -2px, 0) scaleY(1.035); }
+}
