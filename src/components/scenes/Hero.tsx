@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { m, useScroll, useTransform } from 'framer-motion'
 import { RELATIONSHIP_START } from '@/lib/constants'
 import Sophie from '@/components/Sophie'
 
@@ -84,7 +84,7 @@ function FloatingHearts() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
       {HEARTS.map((h, i) => (
-        <motion.span
+        <m.span
           key={i}
           className="absolute select-none leading-none"
           style={{ left: `${h.x}%`, top: 0, fontSize: h.size, color: P.ember }}
@@ -95,7 +95,7 @@ function FloatingHearts() {
           }}
         >
           ♡
-        </motion.span>
+        </m.span>
       ))}
     </div>
   )
@@ -105,7 +105,7 @@ function PixelSparkles() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
       {PIXEL_SPARKLES.map((s, i) => (
-        <motion.div
+        <m.div
           key={i}
           className="absolute"
           style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.size, height: s.size }}
@@ -116,7 +116,7 @@ function PixelSparkles() {
             <rect x="2" y="0" width="1" height="5" fill={s.warm ? P.honey : P.peach} />
             <rect x="0" y="2" width="5" height="1" fill={s.warm ? P.honey : P.peach} />
           </svg>
-        </motion.div>
+        </m.div>
       ))}
     </div>
   )
@@ -126,7 +126,7 @@ function BgPixelHearts() {
   return (
     <div className="pointer-events-none absolute inset-0" aria-hidden>
       {BG_HEARTS.map((h, i) => (
-        <motion.div
+        <m.div
           key={i}
           className="absolute"
           style={{ left: `${h.x}%`, top: `${h.y}%` }}
@@ -134,7 +134,7 @@ function BgPixelHearts() {
           transition={{ duration: 6 + i * 0.8, repeat: Infinity, ease: 'easeInOut', delay: i * 0.6 }}
         >
           <PixelHeart size={h.size} color={P.ember} />
-        </motion.div>
+        </m.div>
       ))}
     </div>
   )
@@ -267,7 +267,7 @@ function HeartBurst({ x, y }: { x: number; y: number }) {
       aria-hidden
     >
       {BURST_PARTICLES.map((p, i) => (
-        <motion.span
+        <m.span
           key={i}
           className="absolute select-none leading-none"
           style={{ fontSize: p.size, color: p.color }}
@@ -287,7 +287,7 @@ function HeartBurst({ x, y }: { x: number; y: number }) {
           }}
         >
           ♡
-        </motion.span>
+        </m.span>
       ))}
     </div>
   )
@@ -335,7 +335,7 @@ export default function Hero() {
       onClick={handleClick}
     >
       {/* Background */}
-      <motion.div
+      <m.div
         className="absolute inset-x-0"
         style={{
           y: bgY, top: '-10%', height: '120%',
@@ -378,16 +378,15 @@ export default function Hero() {
         aria-hidden
       />
 
-      {/* Grain texture */}
-      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden>
-        <filter id="grain">
-          <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="4" stitchTiles="stitch" />
-          <feColorMatrix type="saturate" values="0" />
-        </filter>
-      </svg>
+      {/* Grain texture — baked PNG tile, cheaper than a live feTurbulence filter */}
       <div
         className="pointer-events-none absolute inset-0"
-        style={{ filter: 'url(#grain)', opacity: 0.032, mixBlendMode: 'overlay' }}
+        style={{
+          backgroundImage: 'url(/grain.png)',
+          backgroundRepeat: 'repeat',
+          opacity: 0.032,
+          mixBlendMode: 'overlay',
+        }}
         aria-hidden
       />
 
@@ -397,16 +396,16 @@ export default function Hero() {
       <BotanicalCornerTR />
       <BotanicalCornerBL />
 
-      <motion.div
+      <m.div
         className="relative z-10 flex flex-col items-center text-center"
         style={{ gap: 'clamp(0.5rem, 1.4vw, 0.9rem)', y: contentY, opacity: contentOpacity }}
       >
-        <motion.div custom={0} variants={fadeUp} initial="hidden" animate="show">
+        <m.div custom={0} variants={fadeUp} initial="hidden" animate="show">
           <Ornament />
-        </motion.div>
+        </m.div>
 
         {/* Title — Great Vibes script */}
-        <motion.h1
+        <m.h1
           custom={1} variants={fadeUp} initial="hidden" animate="show"
           style={{
             fontFamily: 'var(--font-script)',
@@ -417,10 +416,10 @@ export default function Hero() {
           }}
         >
           one year of us
-        </motion.h1>
+        </m.h1>
 
         {/* Subtitle */}
-        <motion.p
+        <m.p
           custom={2} variants={fadeUp} initial="hidden" animate="show"
           className="font-serif italic"
           style={{
@@ -431,17 +430,17 @@ export default function Hero() {
           }}
         >
           for Rie ♡
-        </motion.p>
+        </m.p>
 
         {/* Thin rule */}
-        <motion.div
+        <m.div
           custom={2.5} variants={fadeUp} initial="hidden" animate="show"
           style={{ width: 'clamp(40px, 8vw, 72px)', height: 1, background: `linear-gradient(to right, transparent, ${P.honey}, transparent)`, opacity: 0.45 }}
           aria-hidden
         />
 
         {/* Counter */}
-        <motion.div
+        <m.div
           custom={3} variants={fadeUp} initial="hidden" animate="show"
           className="flex items-end"
           style={{ gap: 'clamp(1.25rem, 3.5vw, 2.75rem)', marginTop: 'clamp(0.5rem, 1.5vw, 1.2rem)' }}
@@ -457,36 +456,36 @@ export default function Hero() {
             <PixelHeart size={8} color={P.honey} />
           </div>
           <CounterPill value={minutes} label="min" />
-        </motion.div>
+        </m.div>
 
-        <motion.div
+        <m.div
           custom={4} variants={fadeUp} initial="hidden" animate="show"
           style={{ marginTop: 'clamp(0.4rem, 1vw, 0.75rem)' }}
         >
           <TogetherBadge />
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
 
       <Sophie variant="sleeping" className="absolute bottom-6 right-4 origin-bottom-right scale-[0.62]" />
 
       {bursts.map(b => <HeartBurst key={b.id} x={b.x} y={b.y} />)}
 
       {/* Scroll hint */}
-      <motion.div
+      <m.div
         className="absolute bottom-7 left-0 right-0 z-10 flex justify-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.8, duration: 1.2 }}
         style={{ opacity: scrollHintOp }}
       >
-        <motion.span
+        <m.span
           style={{ color: P.honey, fontSize: '1.1rem', lineHeight: 1, display: 'block' }}
           animate={{ y: [0, 7, 0] }}
           transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
         >
           ↓
-        </motion.span>
-      </motion.div>
+        </m.span>
+      </m.div>
     </section>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { useRef } from 'react'
+import { m, useScroll, useSpring, useTransform, type MotionValue } from 'framer-motion'
 
 const P = {
   bg:     '#FFCDD2', // cotton candy ground
@@ -65,53 +65,59 @@ function Polaroid({ label, rot = 0 }: { label: string; rot?: number }) {
   )
 }
 
-function PeelCard({ i, total, depth, photo }: { i: number; total: number; depth: number; photo: (typeof PHOTOS)[number] }) {
-  const removed = depth < 0
+// Continuous, scroll-scrubbed peel. `front` is a float = how many cards have been
+// consumed (e.g. 2.5 = card 2 is half-peeled). Each card derives its transform from
+// `relative = i - front` with zero React re-renders, so it tracks scroll 1:1 — no
+// integer-threshold pops (2 at once) and no dead scroll gaps (needs 2 scrolls).
+function PeelCard({
+  i,
+  total,
+  front,
+  photo,
+}: {
+  i: number
+  total: number
+  front: MotionValue<number>
+  photo: (typeof PHOTOS)[number]
+}) {
+  // distance from the front of the stack; <0 means this card is peeling/peeled
+  const relative = useTransform(front, (f) => i - f)
+  // peel progress 0→1 once it leaves the front (clamped)
+  const t = (r: number) => Math.min(1, Math.max(0, -r))
+  const exitRot = i % 2 ? 16 : 10
+
+  const x = useTransform(relative, (r) => (r >= 0 ? '0%' : `${t(r) * 128}%`))
+  const y = useTransform(relative, (r) => (r >= 0 ? `${r * -7}px` : `${t(r) * -128}%`))
+  const rotate = useTransform(relative, (r) =>
+    r >= 0 ? photo.rot : photo.rot + t(r) * (exitRot - photo.rot),
+  )
+  const opacity = useTransform(relative, (r) =>
+    r >= 0 ? Math.max(0, 1 - r * 0.08) : Math.max(0, 1 - t(r)),
+  )
+  const scale = useTransform(relative, (r) =>
+    r >= 0 ? Math.max(0.5, 1 - r * 0.03) : 1 - t(r) * 0.08,
+  )
+
   return (
-    <motion.div
+    <m.div
       className="absolute"
-      style={{ zIndex: total - i }}
-      initial={false}
-      animate={
-        removed
-          ? { x: '128%', y: '-128%', rotate: i % 2 ? 16 : 10, opacity: 0, scale: 0.92 }
-          : { x: 0, y: depth * -7, rotate: photo.rot, opacity: Math.max(0, 1 - depth * 0.08), scale: 1 - depth * 0.03 }
-      }
-      transition={removed ? { duration: 0.9, ease: 'easeInOut' } : { type: 'spring', stiffness: 220, damping: 26 }}
+      style={{ zIndex: total - i, willChange: 'transform', x, y, rotate, opacity, scale }}
     >
       <Polaroid label={photo.label} />
-    </motion.div>
+    </m.div>
   )
 }
 
 function PeelAlbum() {
   const ref = useRef<HTMLElement>(null)
   const total = PHOTOS.length
-  const [removedCount, setRemovedCount] = useState(0)
 
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    let raf = 0
-    const update = () => {
-      raf = 0
-      const rect = el.getBoundingClientRect()
-      const span = rect.height - window.innerHeight
-      const p = span > 0 ? Math.min(1, Math.max(0, -rect.top / span)) : 0
-      setRemovedCount(Math.min(total, Math.floor((p / REMOVE_WINDOW) * total + 1e-4)))
-    }
-    const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(update)
-    }
-    update()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onScroll)
-    return () => {
-      window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onScroll)
-      if (raf) cancelAnimationFrame(raf)
-    }
-  }, [total])
+  // Single Lenis-integrated scroll source (same as the other scenes) → consistent
+  // on desktop and mobile. A light spring softens the glide without lagging the finger.
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
+  const smooth = useSpring(scrollYProgress, { stiffness: 140, damping: 30, mass: 0.4 })
+  // map scroll progress → float card index (all peeled by REMOVE_WINDOW of the track)
+  const front = useTransform(smooth, (v) => (v / REMOVE_WINDOW) * total)
 
   return (
     <section ref={ref} style={{ height: '700vh', position: 'relative', background: P.bg }}>
@@ -123,7 +129,7 @@ function PeelAlbum() {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative flex items-center justify-center" style={{ width: 272, height: 360 }}>
             {PHOTOS.map((photo, i) => (
-              <PeelCard key={i} i={i} total={total} depth={i - removedCount} photo={photo} />
+              <PeelCard key={i} i={i} total={total} front={front} photo={photo} />
             ))}
           </div>
         </div>

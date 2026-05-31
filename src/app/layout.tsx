@@ -8,7 +8,7 @@ const crimsonText = Crimson_Text({
   variable: '--font-crimson-text',
   display: 'swap',
   style: ['normal', 'italic'],
-  weight: ['400', '600', '700'],
+  weight: ['400', '600'],
 })
 
 const nunito = Nunito({

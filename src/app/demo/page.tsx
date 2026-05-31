@@ -3,7 +3,7 @@
 // Throwaway demo of the planned lenis.dev-style scroll effects for scenes 3–7.
 // Placeholder boxes only (no real assets). Delete when done. Lenis is global.
 import { useRef, useState } from 'react'
-import { motion, useScroll, useTransform, useMotionValueEvent } from 'framer-motion'
+import { m, useScroll, useTransform, useMotionValueEvent } from 'framer-motion'
 
 // ── Shared ─────────────────────────────────────────────────────────────────
 function Label({ children }: { children: React.ReactNode }) {
@@ -62,11 +62,11 @@ function ParallaxImage() {
   const clip = useTransform(scrollYProgress, [0.1, 0.4], ['inset(0 0 100% 0)', 'inset(0 0 0% 0)'])
 
   return (
-    <motion.div
+    <m.div
       ref={ref}
       style={{ clipPath: clip, width: 300, height: 380, borderRadius: 12, overflow: 'hidden' }}
     >
-      <motion.div style={{ y, height: '136%' }}>
+      <m.div style={{ y, height: '136%' }}>
         <div
           className="flex h-full items-center justify-center font-sans"
           style={{
@@ -78,8 +78,8 @@ function ParallaxImage() {
         >
           parallax image — drifts on scroll
         </div>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   )
 }
 
@@ -114,7 +114,7 @@ function StackCard({
   // glide forward with a spring so the stack never feels static/clunky.
   const removed = depth < 0
   return (
-    <motion.div
+    <m.div
       className="absolute"
       style={{ zIndex: total - i }}
       initial={false}
@@ -136,7 +136,7 @@ function StackCard({
       }
     >
       <PhotoBox label={card.label} />
-    </motion.div>
+    </m.div>
   )
 }
 
@@ -207,7 +207,7 @@ export default function DemoPage() {
 
   return (
     <main className="relative">
-      <motion.div className="fixed inset-0 -z-10" style={{ backgroundColor: bg }} aria-hidden />
+      <m.div className="fixed inset-0 -z-10" style={{ backgroundColor: bg }} aria-hidden />
 
       <Section fg="#FF8FA4">
         <Label>scroll down ↓</Label>
@@ -220,7 +220,7 @@ export default function DemoPage() {
         <Label>1 · text reveal</Label>
         <div className="flex flex-col gap-5">
           {LINES.map((line, i) => (
-            <motion.p
+            <m.p
               key={i}
               custom={i}
               variants={reveal}
@@ -231,7 +231,7 @@ export default function DemoPage() {
               style={{ fontSize: 'clamp(1.1rem, 3.5vw, 1.6rem)' }}
             >
               {line}
-            </motion.p>
+            </m.p>
           ))}
         </div>
       </Section>
@@ -245,7 +245,7 @@ export default function DemoPage() {
 
       <Section fg="#2A1810">
         <Label>3 · payoff</Label>
-        <motion.p
+        <m.p
           initial={{ opacity: 0, y: 28, filter: 'blur(6px)' }}
           whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           viewport={{ once: false, amount: 0.6 }}
@@ -254,7 +254,7 @@ export default function DemoPage() {
           style={{ fontSize: 'clamp(1.25rem, 4vw, 2rem)' }}
         >
           then i saw you…
-        </motion.p>
+        </m.p>
       </Section>
     </main>
   )

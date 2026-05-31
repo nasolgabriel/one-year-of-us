@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { UNLOCK_DATE_DISPLAY } from '@/lib/constants'
 import type { UnlockState, TimeRemaining } from '@/hooks/useUnlock'
 
@@ -56,7 +56,7 @@ function Starfield() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
       {STARS.map((s, i) => (
-        <motion.span
+        <m.span
           key={i}
           className="absolute rounded-full bg-white"
           style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.size, height: s.size }}
@@ -82,7 +82,7 @@ function PadlockSVG({ unlocking }: { unlocking: boolean }) {
       }}
       aria-label="padlock"
     >
-      <motion.g
+      <m.g
         style={{ transformOrigin: '46px 30px', transformBox: 'view-box' }}
         initial={false}
         animate={unlocking ? { rotate: 55, y: -2 } : { rotate: 0, y: 0 }}
@@ -96,7 +96,7 @@ function PadlockSVG({ unlocking }: { unlocking: boolean }) {
           d="M 18 30 V 20 a 14 14 0 0 1 28 0 V 30"
           stroke={C.strawberry} strokeWidth={2.5} strokeLinecap="round" fill="none"
         />
-      </motion.g>
+      </m.g>
 
       <rect x={9.5} y={28} width={45} height={40} rx={7}
         fill={C.lockBody} stroke={C.strawberry} strokeWidth={2.5} />
@@ -154,7 +154,7 @@ function HeartSparkles() {
         const tx = Math.cos(rad) * s.distance
         const ty = Math.sin(rad) * s.distance
         return (
-          <motion.span
+          <m.span
             key={i}
             className="absolute leading-none"
             style={{ fontSize: s.size, color: C.bubblegum, textShadow: `0 0 10px rgba(255,143,164,0.7)` }}
@@ -163,7 +163,7 @@ function HeartSparkles() {
             transition={{ duration: 1.4, delay: s.delay, ease: 'easeOut', times: [0, 0.4, 1] }}
           >
             ♥
-          </motion.span>
+          </m.span>
         )
       })}
     </div>
@@ -174,7 +174,7 @@ function Petals() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
       {PETALS.map((p, i) => (
-        <motion.div
+        <m.div
           key={i}
           className="absolute"
           style={{ left: `${p.x}%`, top: '-30px' }}
@@ -194,7 +194,7 @@ function Petals() {
           <svg width={p.size} height={p.size * 1.5} viewBox="0 0 12 18">
             <path d="M 6 0 C 10 4 12 9 6 18 C 0 9 2 4 6 0 z" fill={PETAL_COLORS[p.hue]} opacity={0.85} />
           </svg>
-        </motion.div>
+        </m.div>
       ))}
     </div>
   )
@@ -211,7 +211,7 @@ export default function LockedHero({ state, timeRemaining }: Props) {
   const { days, hours, minutes, seconds } = timeRemaining
 
   return (
-    <motion.section
+    <m.section
       className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
       style={{ backgroundColor: C.bg }}
       initial={{ opacity: 1 }}
@@ -253,7 +253,7 @@ export default function LockedHero({ state, timeRemaining }: Props) {
         style={{ gap: 'clamp(1.75rem, 3vw, 2.75rem)' }}
       >
         {/* Lock + halos */}
-        <motion.div
+        <m.div
           className="relative flex items-center justify-center"
           initial={{ scale: 0.7, opacity: 0 }}
           animate={
@@ -269,7 +269,7 @@ export default function LockedHero({ state, timeRemaining }: Props) {
         >
           {/* Outer halo */}
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <motion.div
+            <m.div
               className="rounded-full"
               style={{ width: 'clamp(180px, 17vw, 280px)', height: 'clamp(180px, 17vw, 280px)', border: `1px solid ${C.haloOuter}` }}
               animate={
@@ -284,7 +284,7 @@ export default function LockedHero({ state, timeRemaining }: Props) {
 
           {/* Mid halo */}
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <motion.div
+            <m.div
               className="rounded-full"
               style={{ width: 'clamp(130px, 12.5vw, 205px)', height: 'clamp(130px, 12.5vw, 205px)', border: `1px solid ${C.haloMid}` }}
               animate={
@@ -299,7 +299,7 @@ export default function LockedHero({ state, timeRemaining }: Props) {
 
           {/* Inner halo */}
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <motion.div
+            <m.div
               className="rounded-full"
               style={{ width: 'clamp(85px, 8vw, 135px)', height: 'clamp(85px, 8vw, 135px)', border: `1px solid ${C.haloInner}` }}
               animate={
@@ -314,16 +314,16 @@ export default function LockedHero({ state, timeRemaining }: Props) {
 
           {unlocking && <HeartSparkles />}
 
-          <motion.div
+          <m.div
             animate={unlocking ? {} : { scale: [1, 1.035, 1] }}
             transition={unlocking ? {} : { duration: 5.5, repeat: Infinity, ease: 'easeInOut' }}
           >
             <PadlockSVG unlocking={unlocking} />
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
 
         {/* Tagline */}
-        <motion.p
+        <m.p
           initial={{ opacity: 0, y: 8 }}
           animate={unlocking ? { opacity: 0, y: -10 } : { opacity: 1, y: 0 }}
           transition={unlocking ? { duration: 0.55, delay: 0.4 } : { delay: 0.85, duration: 1 }}
@@ -331,10 +331,10 @@ export default function LockedHero({ state, timeRemaining }: Props) {
           style={{ fontSize: 'clamp(1.125rem, 1.6vw, 1.625rem)', letterSpacing: '0.01em', color: C.bubblegum }}
         >
           something awaits for you…
-        </motion.p>
+        </m.p>
 
         {/* Countdown */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 8 }}
           animate={unlocking ? { opacity: 0, y: -10 } : { opacity: 1, y: 0 }}
           transition={unlocking ? { duration: 0.55, delay: 0.5 } : { delay: 1.2, duration: 1 }}
@@ -345,10 +345,10 @@ export default function LockedHero({ state, timeRemaining }: Props) {
             <CountdownTile value={pad(minutes)} label="min"  />
             <CountdownTile value={pad(seconds)} label="sec"  />
           </div>
-        </motion.div>
+        </m.div>
 
         {/* Date hint */}
-        <motion.p
+        <m.p
           initial={{ opacity: 0 }}
           animate={unlocking ? { opacity: 0 } : { opacity: 1 }}
           transition={unlocking ? { duration: 0.4, delay: 0.3 } : { delay: 1.55, duration: 1 }}
@@ -356,11 +356,11 @@ export default function LockedHero({ state, timeRemaining }: Props) {
           style={{ fontSize: 'clamp(0.875rem, 1.05vw, 1.05rem)', letterSpacing: '0.02em', color: 'rgba(255,143,164,0.55)' }}
         >
           unlocks at midnight&ensp;·&ensp;{UNLOCK_DATE_DISPLAY}
-        </motion.p>
+        </m.p>
       </div>
 
       {/* Scroll locked — bottom */}
-      <motion.div
+      <m.div
         className="absolute left-0 right-0 flex justify-center"
         style={{ bottom: 'clamp(1.75rem, 3vh, 3rem)' }}
         initial={{ opacity: 0 }}
@@ -374,7 +374,7 @@ export default function LockedHero({ state, timeRemaining }: Props) {
         >
           scroll is locked&ensp;✕
         </p>
-      </motion.div>
-    </motion.section>
+      </m.div>
+    </m.section>
   )
 }

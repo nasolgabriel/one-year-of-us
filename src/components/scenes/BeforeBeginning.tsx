@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
-import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion'
+import { m, useScroll, useTransform, useReducedMotion } from 'framer-motion'
 
 const P = {
   dusk:   '#5C4B8A', // Part A ground (night-leaning)
@@ -35,7 +35,7 @@ function StoryLine({
   reduced: boolean
 }) {
   return (
-    <motion.p
+    <m.p
       initial={reduced ? { opacity: 0 } : { opacity: 0, y: 28, filter: 'blur(6px)' }}
       whileInView={reduced ? { opacity: 1 } : { opacity: 1, y: 0, filter: 'blur(0px)' }}
       viewport={{ once: false, amount: 0.7 }}
@@ -44,13 +44,13 @@ function StoryLine({
       style={{ color, fontSize: 'clamp(1.35rem, 5vw, 2.4rem)', lineHeight: 1.4, letterSpacing: '0.01em' }}
     >
       {text}
-    </motion.p>
+    </m.p>
   )
 }
 
 function Label({ children, color }: { children: React.ReactNode; color: string }) {
   return (
-    <motion.span
+    <m.span
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 0.65 }}
       viewport={{ once: false, amount: 0.8 }}
@@ -59,7 +59,7 @@ function Label({ children, color }: { children: React.ReactNode; color: string }
       style={{ color, fontSize: 11, letterSpacing: '0.3em' }}
     >
       {children}
-    </motion.span>
+    </m.span>
   )
 }
 
@@ -74,7 +74,7 @@ function Polaroid({ reduced }: { reduced: boolean }) {
   )
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, rotate: -3, scale: 0.96 }}
       whileInView={{ opacity: 1, rotate: -3, scale: 1 }}
       viewport={{ once: false, amount: 0.5 }}
@@ -86,7 +86,7 @@ function Polaroid({ reduced }: { reduced: boolean }) {
         boxShadow: '0 22px 48px -16px rgba(75,21,40,0.35)',
       }}
     >
-      <motion.div
+      <m.div
         ref={ref}
         style={{
           width: 'clamp(220px, 64vw, 300px)',
@@ -95,7 +95,7 @@ function Polaroid({ reduced }: { reduced: boolean }) {
           clipPath: reduced ? undefined : clip,
         }}
       >
-        <motion.div style={{ y: reduced ? 0 : y, height: '132%' }}>
+        <m.div style={{ y: reduced ? 0 : y, height: '132%' }}>
           <div
             className="flex h-full items-center justify-center font-sans"
             style={{
@@ -107,15 +107,15 @@ function Polaroid({ reduced }: { reduced: boolean }) {
           >
             our first photo
           </div>
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
       <p
         className="font-serif italic"
         style={{ marginTop: 14, textAlign: 'center', color: P.ink, opacity: 0.7, fontSize: 15 }}
       >
         us ♡
       </p>
-    </motion.div>
+    </m.div>
   )
 }
 
@@ -128,7 +128,7 @@ export default function BeforeBeginning() {
 
   return (
     <section ref={ref} className="relative overflow-hidden">
-      <motion.div className="absolute inset-0 -z-10" style={{ backgroundColor: bg }} aria-hidden />
+      <m.div className="absolute inset-0 -z-10" style={{ backgroundColor: bg }} aria-hidden />
 
       <div className="relative flex min-h-[160dvh] flex-col items-center justify-center gap-7 px-6 text-center">
         <Label color={P.cotton}>part a · before</Label>
@@ -140,7 +140,7 @@ export default function BeforeBeginning() {
       </div>
 
       <div className="relative flex min-h-[45dvh] items-center justify-center px-6">
-        <motion.p
+        <m.p
           initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.9 }}
           whileInView={reduced ? { opacity: 1 } : { opacity: 1, scale: 1 }}
           viewport={{ once: false, amount: 0.8 }}
@@ -149,7 +149,7 @@ export default function BeforeBeginning() {
           style={{ color: P.rose, fontSize: 'clamp(1.2rem, 4vw, 1.9rem)', letterSpacing: '0.08em' }}
         >
           ✧ dawn breaks ✧
-        </motion.p>
+        </m.p>
       </div>
 
       <div className="relative flex min-h-[170dvh] flex-col items-center justify-center gap-10 px-6 text-center">

@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 
 // Sophie — white + ginger bicolor cat, curled asleep.
 const C = {
@@ -34,7 +34,7 @@ function SleepingCat() {
         { left: 105, top: 8, size: 11, delay: 1.3 },
         { left: 116, top: -4, size: 14, delay: 2.6 },
       ] as { left: number; top: number; size: number; delay: number }[]).map((z, i) => (
-        <motion.span
+        <m.span
           key={i}
           className="absolute select-none leading-none font-sans"
           style={{ left: z.left, top: z.top, fontSize: z.size, color: C.zColor }}
@@ -46,10 +46,10 @@ function SleepingCat() {
           }}
         >
           z
-        </motion.span>
+        </m.span>
       ))}
 
-      <motion.svg
+      <m.svg
         width={132} height={104}
         viewBox="0 0 132 104"
         fill="none"
@@ -129,7 +129,7 @@ function SleepingCat() {
         <ellipse cx={70} cy={86} rx={11} ry={7} fill={C.white} stroke={C.outline} strokeWidth={2} />
         <ellipse cx={88} cy={88} rx={11} ry={7} fill={C.white} stroke={C.outline} strokeWidth={2} />
         <path d="M 70 81 L 70 86 M 88 83 L 88 88" stroke={C.outline} strokeWidth={1.3} strokeLinecap="round" opacity={0.5} />
-      </motion.svg>
+      </m.svg>
     </div>
   )
 }
