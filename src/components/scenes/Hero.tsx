@@ -86,13 +86,13 @@ function FloatingHearts() {
       {HEARTS.map((h, i) => (
         <span
           key={i}
-          className="absolute select-none leading-none"
+          className="absolute select-none leading-none amb-heart"
           style={{
             left: `${h.x}%`, top: 0, fontSize: h.size, color: P.ember,
-            willChange: 'transform, opacity',
             '--drift': `${h.drift}px`,
             '--maxop': h.maxOpacity,
-            animation: `hero-heart-rise ${h.duration}s linear ${h.delay}s infinite`,
+            '--dur': `${h.duration}s`,
+            '--delay': `${h.delay}s`,
           } as React.CSSProperties}
         >
           ♡
@@ -108,12 +108,12 @@ function PixelSparkles() {
       {PIXEL_SPARKLES.map((s, i) => (
         <div
           key={i}
-          className="absolute"
+          className="absolute amb-sparkle"
           style={{
             left: `${s.x}%`, top: `${s.y}%`, width: s.size, height: s.size,
-            willChange: 'transform, opacity',
-            animation: `hero-sparkle ${s.duration}s ease-in-out ${s.delay}s infinite`,
-          }}
+            '--dur': `${s.duration}s`,
+            '--delay': `${s.delay}s`,
+          } as React.CSSProperties}
         >
           <svg width={s.size} height={s.size} viewBox="0 0 5 5" style={{ imageRendering: 'pixelated' }}>
             <rect x="2" y="0" width="1" height="5" fill={s.warm ? P.honey : P.peach} />
@@ -131,12 +131,12 @@ function BgPixelHearts() {
       {BG_HEARTS.map((h, i) => (
         <div
           key={i}
-          className="absolute"
+          className="absolute amb-bgheart"
           style={{
             left: `${h.x}%`, top: `${h.y}%`,
-            willChange: 'opacity',
-            animation: `hero-bgheart ${6 + i * 0.8}s ease-in-out ${i * 0.6}s infinite`,
-          }}
+            '--dur': `${6 + i * 0.8}s`,
+            '--delay': `${i * 0.6}s`,
+          } as React.CSSProperties}
         >
           <PixelHeart size={h.size} color={P.ember} />
         </div>

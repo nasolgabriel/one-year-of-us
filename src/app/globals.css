@@ -68,3 +68,27 @@ body {
   0%, 100% { transform: translate3d(0, 0, 0)    scaleY(1); }
   50%      { transform: translate3d(0, -2px, 0) scaleY(1.035); }
 }
+
+/* Classes (not inline styles) reference the keyframes so Tailwind v4 / Lightning
+   CSS keeps them — it prunes any @keyframes not referenced in the stylesheet.
+   Per-element timing/offsets come in through the --dur/--delay/etc. vars. */
+.amb-heart {
+  will-change: transform, opacity;
+  animation: hero-heart-rise var(--dur) linear var(--delay) infinite;
+}
+.amb-sparkle {
+  will-change: transform, opacity;
+  animation: hero-sparkle var(--dur) ease-in-out var(--delay) infinite;
+}
+.amb-bgheart {
+  will-change: opacity;
+  animation: hero-bgheart var(--dur) ease-in-out var(--delay) infinite;
+}
+.sophie-z {
+  will-change: transform, opacity;
+  animation: sophie-z 6.7s ease-out var(--delay) infinite;
+}
+.sophie-breathe {
+  will-change: transform;
+  animation: sophie-breathe 3.8s ease-in-out infinite;
+}

@@ -15,7 +15,10 @@ export default function Home() {
   const { state, timeRemaining } = useUnlock()
   const lenis = useLenis()
   const showOverlay = state !== 'unlocked'
-  const showScenes = state !== 'sealed'
+  // Mount scenes only at 'unlocked' (when the overlay starts its fade-out) so the
+  // hero's one-shot entrance reveal plays AS the overlay clears — not hidden behind
+  // it during 'unlocking'. The overlay's fade still covers the mount frame, no flash.
+  const showScenes = state === 'unlocked'
 
   useEffect(() => {
     document.body.style.overflow = showOverlay ? 'hidden' : ''

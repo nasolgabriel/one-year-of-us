@@ -1,6 +1,6 @@
 export const RELATIONSHIP_START = new Date('2025-10-25T22:45:00')
 
-export const UNLOCK_DATE = new Date('2026-10-25T00:00:00')
+export const UNLOCK_DATE = new Date('2026-05-25T00:00:00')
 
 export const UNLOCK_DATE_DISPLAY = '10.25.2026'
 

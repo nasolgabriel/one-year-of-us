@@ -35,12 +35,11 @@ function SleepingCat() {
       ] as { left: number; top: number; size: number; delay: number }[]).map((z, i) => (
         <span
           key={i}
-          className="absolute select-none leading-none font-sans"
+          className="absolute select-none leading-none font-sans sophie-z"
           style={{
             left: z.left, top: z.top, fontSize: z.size, color: C.zColor,
-            willChange: 'transform, opacity',
-            animation: `sophie-z 6.7s ease-out ${z.delay}s infinite`,
-          }}
+            '--delay': `${z.delay}s`,
+          } as React.CSSProperties}
         >
           z
         </span>
@@ -50,11 +49,10 @@ function SleepingCat() {
         width={132} height={104}
         viewBox="0 0 132 104"
         fill="none"
+        className="sophie-breathe"
         style={{
           display: 'block', position: 'absolute', bottom: 0, left: 0,
           overflow: 'visible', transformOrigin: '66px 96px',
-          willChange: 'transform',
-          animation: 'sophie-breathe 3.8s ease-in-out infinite',
         }}
       >
         {/* ground shadow */}
