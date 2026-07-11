@@ -1,15 +1,13 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import Image from 'next/image'
 import { m, useScroll, useTransform, useReducedMotion } from 'framer-motion'
+import { fetchPhotoByFile } from '@/lib/supabase'
+import { cropImageStyle, DEFAULT_CROP, type Crop } from '@/lib/crop'
 
 const FIRST_PHOTO_URL =
   'https://zqsrakftmkmiijcwbpdr.supabase.co/storage/v1/object/public/photos/IMG_6.jpg'
-
-const FILM_FILTER = 'saturate(0.8) contrast(1.05) brightness(1.05) sepia(0.15)'
-const FILM_OVERLAY =
-  'linear-gradient(rgba(112,140,190,0.14), rgba(112,140,190,0.14)), radial-gradient(ellipse at center, rgba(255,255,255,0) 55%, rgba(40,20,35,0.25) 100%)'
 
 const P = {
   dusk:   '#5C4B8A', // Part A ground (night-leaning)
@@ -71,7 +69,7 @@ function Label({ children, color }: { children: React.ReactNode; color: string }
   )
 }
 
-function Polaroid({ reduced }: { reduced: boolean }) {
+function Polaroid({ reduced, crop }: { reduced: boolean; crop: Crop }) {
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
   const y = useTransform(scrollYProgress, [0, 1], ['-16%', '16%'])
@@ -109,9 +107,8 @@ function Polaroid({ reduced }: { reduced: boolean }) {
             alt="our first photo"
             fill
             sizes="300px"
-            style={{ objectFit: 'cover', filter: FILM_FILTER }}
+            style={cropImageStyle(crop)}
           />
-          <div className="absolute inset-0" style={{ background: FILM_OVERLAY, pointerEvents: 'none' }} />
         </m.div>
       </m.div>
       <p
@@ -127,6 +124,20 @@ function Polaroid({ reduced }: { reduced: boolean }) {
 export default function BeforeBeginning() {
   const reduced = useReducedMotion() ?? false
   const ref = useRef<HTMLElement>(null)
+  const [crop, setCrop] = useState<Crop>(DEFAULT_CROP)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchPhotoByFile('IMG_6.jpg')
+      .then((r) => {
+        if (cancelled || !r) return
+        setCrop({ posX: r.pos_x, posY: r.pos_y, zoom: r.zoom, orient: r.orient })
+      })
+      .catch(() => {}) // defaults stay — frame still renders
+    return () => {
+      cancelled = true
+    }
+  }, [])
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
 
   const bg = useTransform(scrollYProgress, [0, 0.4, 0.62, 1], [P.dusk, P.dusk, P.cream, P.cream])
@@ -160,7 +171,7 @@ export default function BeforeBeginning() {
       <div className="relative flex min-h-[170dvh] flex-col items-center justify-center gap-10 px-6 text-center">
         <Label color={P.rose}>part b · beginning</Label>
         <StoryLine text={PART_B[0]} i={0} color={P.ink} reduced={reduced} />
-        <Polaroid reduced={reduced} />
+        <Polaroid reduced={reduced} crop={crop} />
         <div className="flex flex-col gap-6">
           {PART_B.slice(1).map((line, i) => (
             <StoryLine key={i} text={line} i={i} color={P.ink} reduced={reduced} />

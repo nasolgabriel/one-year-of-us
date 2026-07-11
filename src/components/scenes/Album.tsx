@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { m, useScroll, useSpring, useTransform, type MotionValue } from 'framer-motion'
 import { useLenis } from 'lenis/react'
 import { fetchPhotos } from '@/lib/supabase'
+import { cropImageStyle } from '@/lib/crop'
 
 const P = {
   bg:     '#FFCDD2', // cotton candy ground
@@ -13,17 +14,15 @@ const P = {
   paper:  '#FFFDF7', // polaroid frame
 } as const
 
-// Cool, slightly faded instant-film look: desaturate + soft sepia base, then a
-// cold blue wash and vignette layered on top (CSS filters alone can't cool sepia).
-const FILM_FILTER = 'saturate(0.8) contrast(1.05) brightness(1.05) sepia(0.15)'
-const FILM_OVERLAY =
-  'linear-gradient(rgba(112,140,190,0.14), rgba(112,140,190,0.14)), radial-gradient(ellipse at center, rgba(255,255,255,0) 55%, rgba(40,20,35,0.25) 100%)'
-
 type AlbumPhoto = {
   label: string
   caption: string
   url: string | null
   rot: number
+  posX: number
+  posY: number
+  zoom: number
+  orient: number
 }
 
 const TILT = [-4, 3, -2, 5, -5, 2, -3, 4, -1, 3]
@@ -33,6 +32,10 @@ const FALLBACK_PHOTOS: AlbumPhoto[] = TILT.map((rot, i) => ({
   caption: 'us ♡',
   url: null,
   rot,
+  posX: 50,
+  posY: 50,
+  zoom: 1,
+  orient: 0,
 }))
 
 const REMOVE_WINDOW = 0.82
@@ -69,19 +72,13 @@ function Polaroid({ photo, rot = 0 }: { photo: AlbumPhoto; rot?: number }) {
         }}
       >
         {photo.url ? (
-          <>
-            <Image
-              src={photo.url}
-              alt={photo.label}
-              fill
-              sizes="248px"
-              style={{ objectFit: 'cover', filter: FILM_FILTER }}
-            />
-            <div
-              className="absolute inset-0"
-              style={{ background: FILM_OVERLAY, pointerEvents: 'none' }}
-            />
-          </>
+          <Image
+            src={photo.url}
+            alt={photo.label}
+            fill
+            sizes="248px"
+            style={cropImageStyle(photo)}
+          />
         ) : (
           photo.label
         )}
@@ -381,6 +378,10 @@ export default function Album() {
             caption: r.caption ?? 'us ♡',
             url: r.image_url,
             rot: r.rotation || TILT[i % TILT.length],
+            posX: r.pos_x,
+            posY: r.pos_y,
+            zoom: r.zoom,
+            orient: r.orient,
           })),
         )
       })
