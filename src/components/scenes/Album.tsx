@@ -1,8 +1,10 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
+import Image from 'next/image'
 import { m, useScroll, useSpring, useTransform, type MotionValue } from 'framer-motion'
 import { useLenis } from 'lenis/react'
+import { fetchPhotos } from '@/lib/supabase'
 
 const P = {
   bg:     '#FFCDD2', // cotton candy ground
@@ -11,18 +13,27 @@ const P = {
   paper:  '#FFFDF7', // polaroid frame
 } as const
 
-const PHOTOS = [
-  { label: 'photo 1', rot: -4 },
-  { label: 'photo 2', rot: 3 },
-  { label: 'photo 3', rot: -2 },
-  { label: 'photo 4', rot: 5 },
-  { label: 'photo 5', rot: -5 },
-  { label: 'photo 6', rot: 2 },
-  { label: 'photo 7', rot: -3 },
-  { label: 'photo 8', rot: 4 },
-  { label: 'photo 9', rot: -1 },
-  { label: 'photo 10', rot: 3 },
-]
+// Cool, slightly faded instant-film look: desaturate + soft sepia base, then a
+// cold blue wash and vignette layered on top (CSS filters alone can't cool sepia).
+const FILM_FILTER = 'saturate(0.8) contrast(1.05) brightness(1.05) sepia(0.15)'
+const FILM_OVERLAY =
+  'linear-gradient(rgba(112,140,190,0.14), rgba(112,140,190,0.14)), radial-gradient(ellipse at center, rgba(255,255,255,0) 55%, rgba(40,20,35,0.25) 100%)'
+
+type AlbumPhoto = {
+  label: string
+  caption: string
+  url: string | null
+  rot: number
+}
+
+const TILT = [-4, 3, -2, 5, -5, 2, -3, 4, -1, 3]
+
+const FALLBACK_PHOTOS: AlbumPhoto[] = TILT.map((rot, i) => ({
+  label: `photo ${i + 1}`,
+  caption: 'us ♡',
+  url: null,
+  rot,
+}))
 
 const REMOVE_WINDOW = 0.82
 
@@ -34,7 +45,7 @@ function Label({ children }: { children: React.ReactNode }) {
   )
 }
 
-function Polaroid({ label, rot = 0 }: { label: string; rot?: number }) {
+function Polaroid({ photo, rot = 0 }: { photo: AlbumPhoto; rot?: number }) {
   return (
     <div
       className="font-sans"
@@ -47,7 +58,7 @@ function Polaroid({ label, rot = 0 }: { label: string; rot?: number }) {
       }}
     >
       <div
-        className="flex items-center justify-center"
+        className="relative flex items-center justify-center overflow-hidden"
         style={{
           width: 'clamp(208px, 60vw, 248px)',
           height: 'clamp(248px, 72vw, 296px)',
@@ -57,10 +68,26 @@ function Polaroid({ label, rot = 0 }: { label: string; rot?: number }) {
           letterSpacing: '0.16em',
         }}
       >
-        {label}
+        {photo.url ? (
+          <>
+            <Image
+              src={photo.url}
+              alt={photo.label}
+              fill
+              sizes="248px"
+              style={{ objectFit: 'cover', filter: FILM_FILTER }}
+            />
+            <div
+              className="absolute inset-0"
+              style={{ background: FILM_OVERLAY, pointerEvents: 'none' }}
+            />
+          </>
+        ) : (
+          photo.label
+        )}
       </div>
       <p className="font-serif italic" style={{ marginTop: 12, textAlign: 'center', color: P.ink, opacity: 0.6, fontSize: 14 }}>
-        us ♡
+        {photo.caption}
       </p>
     </div>
   )
@@ -79,7 +106,7 @@ function ScrubCard({
   i: number
   total: number
   front: MotionValue<number>
-  photo: (typeof PHOTOS)[number]
+  photo: AlbumPhoto
 }) {
   // distance from the front of the stack; <0 means this card is peeling/peeled
   const relative = useTransform(front, (f) => i - f)
@@ -104,14 +131,14 @@ function ScrubCard({
       className="absolute"
       style={{ zIndex: total - i, willChange: 'transform', x, y, rotate, opacity, scale }}
     >
-      <Polaroid label={photo.label} />
+      <Polaroid photo={photo} />
     </m.div>
   )
 }
 
-function ScrubAlbum() {
+function ScrubAlbum({ photos }: { photos: AlbumPhoto[] }) {
   const ref = useRef<HTMLElement>(null)
-  const total = PHOTOS.length
+  const total = photos.length
 
   // Single Lenis-integrated scroll source (same as the other scenes) → consistent.
   // A light spring softens the glide without lagging the finger.
@@ -129,7 +156,7 @@ function ScrubAlbum() {
 
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative flex items-center justify-center" style={{ width: 272, height: 360 }}>
-            {PHOTOS.map((photo, i) => (
+            {photos.map((photo, i) => (
               <ScrubCard key={i} i={i} total={total} front={front} photo={photo} />
             ))}
           </div>
@@ -157,7 +184,7 @@ function SwipeCard({
   i: number
   total: number
   index: number
-  photo: (typeof PHOTOS)[number]
+  photo: AlbumPhoto
 }) {
   const depth = i - index
   const removed = depth < 0
@@ -173,16 +200,16 @@ function SwipeCard({
       }
       transition={removed ? { duration: 0.55, ease: [0.22, 1, 0.36, 1] } : { type: 'spring', stiffness: 260, damping: 28 }}
     >
-      <Polaroid label={photo.label} />
+      <Polaroid photo={photo} />
     </m.div>
   )
 }
 
 const SWIPE_THRESHOLD = 36 // px of vertical travel to count as one step
 
-function SwipeAlbum() {
+function SwipeAlbum({ photos }: { photos: AlbumPhoto[] }) {
   const sectionRef = useRef<HTMLElement>(null)
-  const total = PHOTOS.length
+  const total = photos.length
   const [index, setIndex] = useState(0)
   const indexRef = useRef(0)
   useEffect(() => {
@@ -309,7 +336,7 @@ function SwipeAlbum() {
 
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="relative flex items-center justify-center" style={{ width: 272, height: 360 }}>
-          {PHOTOS.map((photo, i) => (
+          {photos.map((photo, i) => (
             <SwipeCard key={i} i={i} total={total} index={index} photo={photo} />
           ))}
         </div>
@@ -341,5 +368,27 @@ function useCoarsePointer() {
 
 export default function Album() {
   const coarse = useCoarsePointer()
-  return coarse ? <SwipeAlbum /> : <ScrubAlbum />
+  const [photos, setPhotos] = useState<AlbumPhoto[]>(FALLBACK_PHOTOS)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchPhotos()
+      .then((rows) => {
+        if (cancelled || rows.length === 0) return
+        setPhotos(
+          rows.map((r, i) => ({
+            label: r.title,
+            caption: r.caption ?? 'us ♡',
+            url: r.image_url,
+            rot: r.rotation || TILT[i % TILT.length],
+          })),
+        )
+      })
+      .catch(() => {}) // fetch failure → placeholder cards stay, scene never breaks
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  return coarse ? <SwipeAlbum photos={photos} /> : <ScrubAlbum photos={photos} />
 }

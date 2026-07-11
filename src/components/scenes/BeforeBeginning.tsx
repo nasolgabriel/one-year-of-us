@@ -1,7 +1,15 @@
 'use client'
 
 import { useRef } from 'react'
+import Image from 'next/image'
 import { m, useScroll, useTransform, useReducedMotion } from 'framer-motion'
+
+const FIRST_PHOTO_URL =
+  'https://zqsrakftmkmiijcwbpdr.supabase.co/storage/v1/object/public/photos/IMG_6.jpg'
+
+const FILM_FILTER = 'saturate(0.8) contrast(1.05) brightness(1.05) sepia(0.15)'
+const FILM_OVERLAY =
+  'linear-gradient(rgba(112,140,190,0.14), rgba(112,140,190,0.14)), radial-gradient(ellipse at center, rgba(255,255,255,0) 55%, rgba(40,20,35,0.25) 100%)'
 
 const P = {
   dusk:   '#5C4B8A', // Part A ground (night-leaning)
@@ -95,18 +103,15 @@ function Polaroid({ reduced }: { reduced: boolean }) {
           clipPath: reduced ? undefined : clip,
         }}
       >
-        <m.div style={{ y: reduced ? 0 : y, height: '132%' }}>
-          <div
-            className="flex h-full items-center justify-center font-sans"
-            style={{
-              background: 'linear-gradient(160deg, #534AB7 0%, #E24B6A 65%, #FAC775 100%)',
-              color: '#FFF5F5',
-              fontSize: 13,
-              letterSpacing: '0.18em',
-            }}
-          >
-            our first photo
-          </div>
+        <m.div style={{ y: reduced ? 0 : y, height: '132%', position: 'relative' }}>
+          <Image
+            src={FIRST_PHOTO_URL}
+            alt="our first photo"
+            fill
+            sizes="300px"
+            style={{ objectFit: 'cover', filter: FILM_FILTER }}
+          />
+          <div className="absolute inset-0" style={{ background: FILM_OVERLAY, pointerEvents: 'none' }} />
         </m.div>
       </m.div>
       <p
