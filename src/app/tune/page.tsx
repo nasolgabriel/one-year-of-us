@@ -257,7 +257,9 @@ export default function TunePage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchAllPhotos().then(setPhotos).catch((e) => setError(String(e)))
+    fetchAllPhotos()
+      .then(setPhotos)
+      .catch((e) => setError(e instanceof Error ? e.message : (e?.message ?? JSON.stringify(e))))
   }, [])
 
   function handleSaved(id: number, fields: PhotoUpdate) {

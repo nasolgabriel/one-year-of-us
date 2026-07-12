@@ -7,6 +7,7 @@ import { useLenis } from 'lenis/react'
 import { useUnlock } from '@/hooks/useUnlock'
 import LockedHero from '@/components/scenes/LockedHero'
 import Hero from '@/components/scenes/Hero'
+import PhotoPreloader from '@/components/PhotoPreloader'
 
 const BeforeBeginning = dynamic(() => import('@/components/scenes/BeforeBeginning'), { ssr: false })
 const Album = dynamic(() => import('@/components/scenes/Album'), { ssr: false })
@@ -39,6 +40,8 @@ export default function Home() {
           <Album />
         </>
       )}
+
+      {showOverlay && <PhotoPreloader />}
 
       <AnimatePresence>
         {showOverlay && (
