@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
-import { fetchAllPhotos, updatePhotoCrop, type Photo } from '@/lib/supabase'
+import {
+  fetchAllPhotos,
+  updatePhoto,
+  clearFeatured,
+  type Photo,
+  type PhotoUpdate,
+} from '@/lib/supabase'
 import { cropImageStyle } from '@/lib/crop'
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
@@ -39,7 +45,22 @@ function Slider({
   )
 }
 
-function TuneCard({ photo }: { photo: Photo }) {
+function TuneCard({
+  photo,
+  usedOrders,
+  maxOrder,
+  onSaved,
+  onFeatured,
+}: {
+  photo: Photo
+  usedOrders: Set<number>
+  maxOrder: number
+  onSaved: (id: number, fields: PhotoUpdate) => void
+  onFeatured: (id: number) => void
+}) {
+  const [order, setOrder] = useState(photo.order_index)
+  const [title, setTitle] = useState(photo.title)
+  const [caption, setCaption] = useState(photo.caption ?? '')
   const [posX, setPosX] = useState(photo.pos_x)
   const [posY, setPosY] = useState(photo.pos_y)
   const [zoom, setZoom] = useState(photo.zoom)
@@ -47,16 +68,49 @@ function TuneCard({ photo }: { photo: Photo }) {
   const [save, setSave] = useState<SaveState>('idle')
 
   const dirty =
-    posX !== photo.pos_x || posY !== photo.pos_y || zoom !== photo.zoom || orient !== photo.orient
+    order !== photo.order_index ||
+    title !== photo.title ||
+    caption !== (photo.caption ?? '') ||
+    posX !== photo.pos_x ||
+    posY !== photo.pos_y ||
+    zoom !== photo.zoom ||
+    orient !== photo.orient
+
+  const inAlbum = photo.order_index > 0
+
+  // Slot free if no other photo saved it; own saved slot always selectable.
+  const slotOptions = Array.from({ length: maxOrder }, (_, i) => i + 1).filter(
+    (n) => !usedOrders.has(n) || n === photo.order_index,
+  )
 
   async function onSave() {
     setSave('saving')
+    const fields: PhotoUpdate = {
+      order_index: order,
+      title,
+      caption: caption || null,
+      pos_x: posX,
+      pos_y: posY,
+      zoom,
+      orient,
+    }
     try {
-      await updatePhotoCrop(photo.id, { pos_x: posX, pos_y: posY, zoom, orient })
-      photo.pos_x = posX
-      photo.pos_y = posY
-      photo.zoom = zoom
-      photo.orient = orient
+      await updatePhoto(photo.id, fields)
+      onSaved(photo.id, fields)
+      setSave('saved')
+      setTimeout(() => setSave('idle'), 1500)
+    } catch {
+      setSave('error')
+    }
+  }
+
+  async function onMakeFeatured() {
+    setSave('saving')
+    try {
+      await clearFeatured()
+      await updatePhoto(photo.id, { featured: true })
+      setOrder(0)
+      onFeatured(photo.id)
       setSave('saved')
       setTimeout(() => setSave('idle'), 1500)
     } catch {
@@ -65,13 +119,31 @@ function TuneCard({ photo }: { photo: Photo }) {
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg bg-white p-4 shadow">
-      <p className="text-sm font-medium text-neutral-800">
-        #{photo.order_index} · {photo.title}
-        <span className="ml-2 text-xs text-neutral-400">
-          {photo.image_url.split('/').pop()}
+    <div
+      className="flex flex-col gap-3 rounded-lg bg-white p-4 shadow"
+      style={{ opacity: photo.order_index === 0 && !photo.featured ? 0.6 : 1 }}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-neutral-400">{photo.image_url.split('/').pop()}</span>
+        <span className="flex gap-2">
+          {photo.featured && (
+            <span className="rounded bg-purple-100 px-2 py-0.5 text-xs text-purple-700">
+              first photo ♡
+            </span>
+          )}
+          {inAlbum ? (
+            <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-700">
+              album #{photo.order_index}
+            </span>
+          ) : (
+            !photo.featured && (
+              <span className="rounded bg-neutral-200 px-2 py-0.5 text-xs text-neutral-500">
+                unused
+              </span>
+            )
+          )}
         </span>
-      </p>
+      </div>
 
       <div
         className="relative mx-auto overflow-hidden bg-neutral-200"
@@ -79,12 +151,55 @@ function TuneCard({ photo }: { photo: Photo }) {
       >
         <Image
           src={photo.image_url}
-          alt={photo.title}
+          alt={title || 'photo'}
           fill
-          sizes="248px"
+          sizes="600px"
           style={cropImageStyle({ posX, posY, zoom, orient })}
         />
       </div>
+
+      <label className="flex items-center gap-2 text-xs text-neutral-600">
+        <span className="w-12 shrink-0">order</span>
+        <select
+          value={order}
+          disabled={photo.featured}
+          onChange={(e) => setOrder(Number(e.target.value))}
+          className="w-28 rounded border border-neutral-300 px-2 py-1 disabled:bg-neutral-100"
+        >
+          <option value={0}>— none —</option>
+          {slotOptions.map((n) => (
+            <option key={n} value={n}>
+              {n}
+            </option>
+          ))}
+        </select>
+        {photo.featured ? (
+          <span className="text-neutral-400">first photo — can&apos;t be in album</span>
+        ) : (
+          <span className="text-neutral-400">taken numbers hidden</span>
+        )}
+      </label>
+
+      <label className="flex items-center gap-2 text-xs text-neutral-600">
+        <span className="w-12 shrink-0">title</span>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full rounded border border-neutral-300 px-2 py-1"
+        />
+      </label>
+
+      <label className="flex items-center gap-2 text-xs text-neutral-600">
+        <span className="w-12 shrink-0">caption</span>
+        <input
+          type="text"
+          value={caption}
+          onChange={(e) => setCaption(e.target.value)}
+          placeholder="us ♡"
+          className="w-full rounded border border-neutral-300 px-2 py-1"
+        />
+      </label>
 
       <div className="flex items-center gap-2">
         <span className="text-xs text-neutral-600">rotate</span>
@@ -113,9 +228,25 @@ function TuneCard({ photo }: { photo: Photo }) {
         >
           {save === 'saving' ? 'saving…' : 'save'}
         </button>
+        {!photo.featured &&
+          (inAlbum ? (
+            <span className="text-xs text-neutral-400" title="Set order to — none — and save first">
+              in album — can&apos;t be first photo
+            </span>
+          ) : (
+            <button
+              onClick={onMakeFeatured}
+              disabled={save === 'saving'}
+              className="rounded border border-purple-300 px-3 py-1.5 text-xs text-purple-700"
+            >
+              make first photo
+            </button>
+          ))}
         {save === 'saved' && <span className="text-xs text-green-600">saved ✓</span>}
-        {save === 'error' && <span className="text-xs text-red-600">failed — RLS update policy missing?</span>}
-        {dirty && save === 'idle' && <span className="text-xs text-amber-600">unsaved changes</span>}
+        {save === 'error' && (
+          <span className="text-xs text-red-600">failed — slot taken or RLS policy missing</span>
+        )}
+        {dirty && save === 'idle' && <span className="text-xs text-amber-600">unsaved</span>}
       </div>
     </div>
   )
@@ -129,19 +260,57 @@ export default function TunePage() {
     fetchAllPhotos().then(setPhotos).catch((e) => setError(String(e)))
   }, [])
 
+  function handleSaved(id: number, fields: PhotoUpdate) {
+    setPhotos((prev) => (prev ? prev.map((p) => (p.id === id ? { ...p, ...fields } : p)) : prev))
+  }
+
+  // Featured is exclusive; the new first photo also leaves the album (order 0).
+  function handleFeatured(id: number) {
+    setPhotos((prev) =>
+      prev
+        ? prev.map((p) =>
+            p.id === id
+              ? { ...p, featured: true, order_index: 0 }
+              : { ...p, featured: false },
+          )
+        : prev,
+    )
+  }
+
+  const usedOrders = new Set(
+    (photos ?? []).filter((p) => p.order_index > 0).map((p) => p.order_index),
+  )
+
+  const sorted = photos
+    ? [...photos].sort((a, b) => {
+        if (a.featured !== b.featured) return a.featured ? -1 : 1
+        if ((a.order_index === 0) !== (b.order_index === 0)) return a.order_index === 0 ? 1 : -1
+        return a.order_index - b.order_index
+      })
+    : null
+
   return (
     <main className="min-h-dvh bg-neutral-100 p-6">
-      <h1 className="mb-1 text-xl font-semibold text-neutral-800">photo crop tuner</h1>
+      <h1 className="mb-1 text-xl font-semibold text-neutral-800">photo tuner</h1>
       <p className="mb-6 text-sm text-neutral-500">
-        Adjust each photo to sit right in its polaroid frame. Values save to Supabase; the site
-        reads them on load. Internal tool — not linked from the site.
+        Each photo lives in one place: the first-photo frame, the album (unique order number), or
+        unused. Taken order numbers disappear from the other dropdowns.
       </p>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
       {!photos && !error && <p className="text-sm text-neutral-500">loading…</p>}
 
       <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
-        {photos?.map((p) => <TuneCard key={p.id} photo={p} />)}
+        {sorted?.map((p) => (
+          <TuneCard
+            key={p.id}
+            photo={p}
+            usedOrders={usedOrders}
+            maxOrder={photos?.length ?? 0}
+            onSaved={handleSaved}
+            onFeatured={handleFeatured}
+          />
+        ))}
       </div>
     </main>
   )

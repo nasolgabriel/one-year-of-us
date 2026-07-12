@@ -76,7 +76,7 @@ function Polaroid({ photo, rot = 0 }: { photo: AlbumPhoto; rot?: number }) {
             src={photo.url}
             alt={photo.label}
             fill
-            sizes="248px"
+            sizes="600px"
             style={cropImageStyle(photo)}
           />
         ) : (

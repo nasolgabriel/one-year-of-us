@@ -3,11 +3,10 @@
 import { useRef, useState, useEffect } from 'react'
 import Image from 'next/image'
 import { m, useScroll, useTransform, useReducedMotion } from 'framer-motion'
-import { fetchPhotoByFile } from '@/lib/supabase'
+import { fetchFeaturedPhoto } from '@/lib/supabase'
 import { cropImageStyle, DEFAULT_CROP, type Crop } from '@/lib/crop'
 
-const FIRST_PHOTO_URL =
-  'https://zqsrakftmkmiijcwbpdr.supabase.co/storage/v1/object/public/photos/IMG_6.jpg'
+type FirstPhoto = { url: string | null; crop: Crop }
 
 const P = {
   dusk:   '#5C4B8A', // Part A ground (night-leaning)
@@ -69,10 +68,9 @@ function Label({ children, color }: { children: React.ReactNode; color: string }
   )
 }
 
-function Polaroid({ reduced, crop }: { reduced: boolean; crop: Crop }) {
+function Polaroid({ reduced, first }: { reduced: boolean; first: FirstPhoto }) {
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
-  const y = useTransform(scrollYProgress, [0, 1], ['-16%', '16%'])
   const clip = useTransform(
     scrollYProgress,
     [0.12, 0.4],
@@ -101,15 +99,30 @@ function Polaroid({ reduced, crop }: { reduced: boolean; crop: Crop }) {
           clipPath: reduced ? undefined : clip,
         }}
       >
-        <m.div style={{ y: reduced ? 0 : y, height: '132%', position: 'relative' }}>
-          <Image
-            src={FIRST_PHOTO_URL}
-            alt="our first photo"
-            fill
-            sizes="300px"
-            style={cropImageStyle(crop)}
-          />
-        </m.div>
+        {/* Full frame size (no parallax oversize) so the crop matches Album and /tune exactly */}
+        <div style={{ height: '100%', position: 'relative' }}>
+          {first.url ? (
+            <Image
+              src={first.url}
+              alt="our first photo"
+              fill
+              sizes="600px"
+              style={cropImageStyle(first.crop)}
+            />
+          ) : (
+            <div
+              className="flex h-full items-center justify-center font-sans"
+              style={{
+                background: 'linear-gradient(160deg, #534AB7 0%, #E24B6A 65%, #FAC775 100%)',
+                color: '#FFF5F5',
+                fontSize: 13,
+                letterSpacing: '0.18em',
+              }}
+            >
+              our first photo
+            </div>
+          )}
+        </div>
       </m.div>
       <p
         className="font-serif italic"
@@ -124,16 +137,19 @@ function Polaroid({ reduced, crop }: { reduced: boolean; crop: Crop }) {
 export default function BeforeBeginning() {
   const reduced = useReducedMotion() ?? false
   const ref = useRef<HTMLElement>(null)
-  const [crop, setCrop] = useState<Crop>(DEFAULT_CROP)
+  const [first, setFirst] = useState<FirstPhoto>({ url: null, crop: DEFAULT_CROP })
 
   useEffect(() => {
     let cancelled = false
-    fetchPhotoByFile('IMG_6.jpg')
+    fetchFeaturedPhoto()
       .then((r) => {
         if (cancelled || !r) return
-        setCrop({ posX: r.pos_x, posY: r.pos_y, zoom: r.zoom, orient: r.orient })
+        setFirst({
+          url: r.image_url,
+          crop: { posX: r.pos_x, posY: r.pos_y, zoom: r.zoom, orient: r.orient },
+        })
       })
-      .catch(() => {}) // defaults stay — frame still renders
+      .catch(() => {}) // placeholder stays — frame still renders
     return () => {
       cancelled = true
     }
@@ -171,7 +187,7 @@ export default function BeforeBeginning() {
       <div className="relative flex min-h-[170dvh] flex-col items-center justify-center gap-10 px-6 text-center">
         <Label color={P.rose}>part b · beginning</Label>
         <StoryLine text={PART_B[0]} i={0} color={P.ink} reduced={reduced} />
-        <Polaroid reduced={reduced} crop={crop} />
+        <Polaroid reduced={reduced} first={first} />
         <div className="flex flex-col gap-6">
           {PART_B.slice(1).map((line, i) => (
             <StoryLine key={i} text={line} i={i} color={P.ink} reduced={reduced} />
