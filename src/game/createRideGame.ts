@@ -1,11 +1,8 @@
 import kaplay from 'kaplay'
-import { GROUND_COLOR, GROUND_HEIGHT, SKY_COLOR, VIRTUAL_HEIGHT } from './config'
+import { SKY_COLOR, VIRTUAL_HEIGHT } from './config'
+import { setupPlayer } from './player'
+import { hexToRgb, setupWorld } from './world'
 import type { GameEvents, GameHandle, RideCtx } from './types'
-
-function hexToRgb(hex: string): [number, number, number] {
-  const n = parseInt(hex.slice(1), 16)
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
-}
 
 export function createRideGame(canvas: HTMLCanvasElement, events: GameEvents): GameHandle {
   const holder = canvas.parentElement
@@ -25,22 +22,21 @@ export function createRideGame(canvas: HTMLCanvasElement, events: GameEvents): G
     background: hexToRgb(SKY_COLOR),
   })
 
-  const ctx: RideCtx = { k, events, phase: 'idle', distance: 0 }
+  const ctx: RideCtx = { k, events, phase: 'idle', distance: 0, speedScale: 0 }
 
-  k.add([
-    k.rect(width, GROUND_HEIGHT),
-    k.pos(0, VIRTUAL_HEIGHT - GROUND_HEIGHT),
-    k.color(...hexToRgb(GROUND_COLOR)),
-  ])
+  setupWorld(ctx)
+  setupPlayer(ctx)
 
   return {
     start() {
       if (ctx.phase !== 'idle') return
       ctx.phase = 'riding'
+      ctx.speedScale = 1
     },
     resumeFromMemory() {
       if (ctx.phase !== 'memory') return
       ctx.phase = 'riding'
+      ctx.speedScale = 1
     },
     pause() {
       k.debug.paused = true

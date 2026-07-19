@@ -19,5 +19,17 @@ export const HOP = {
   gravity: 640,
 } as const
 
+// Riding bob: subtle up-only bounce while grounded.
+export const BOB = {
+  freq: 9,
+  amp: 1.5,
+} as const
+
+// Path dash marks — distance between spawns, virtual px.
+export const DASH_SPACING = 90
+
+// Scrolling objects are destroyed once past this x.
+export const SCROLL_CULL_X = -40
+
 export const SKY_COLOR = COLORS.green
 export const GROUND_COLOR = COLORS.amber

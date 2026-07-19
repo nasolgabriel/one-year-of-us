@@ -36,10 +36,12 @@ export type GameHandle = {
 }
 
 // Shared context passed to every game module. `phase` is written only by
-// createRideGame; modules read it.
+// createRideGame; modules read it. `speedScale` is the world pace multiplier
+// (0 = stopped, 1 = full ride) — memory mode and the Sophie pickup tween it.
 export type RideCtx = {
   k: KAPLAYCtx
   events: GameEvents
   phase: GamePhase
   distance: number
+  speedScale: number
 }
