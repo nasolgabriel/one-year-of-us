@@ -1,6 +1,7 @@
 import kaplay from 'kaplay'
 import { SKY_COLOR, VIRTUAL_HEIGHT } from './config'
 import { setupPlayer } from './player'
+import { setupSpawner } from './spawner'
 import { hexToRgb, setupWorld } from './world'
 import type { GameEvents, GameHandle, RideCtx } from './types'
 
@@ -25,7 +26,8 @@ export function createRideGame(canvas: HTMLCanvasElement, events: GameEvents): G
   const ctx: RideCtx = { k, events, phase: 'idle', distance: 0, speedScale: 0 }
 
   setupWorld(ctx)
-  setupPlayer(ctx)
+  const player = setupPlayer(ctx)
+  setupSpawner(ctx, player)
 
   return {
     start() {

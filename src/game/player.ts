@@ -1,10 +1,13 @@
+import type { GameObj } from 'kaplay'
 import { COLORS } from '@/lib/constants'
-import { BOB, HOP, PLAYER_X_FRAC } from './config'
+import { BOB, BUMP_TIME, HOP, PLAYER_X_FRAC } from './config'
 import { GROUND_Y, hexToRgb } from './world'
 import type { RideCtx } from './types'
 
 export type Player = {
+  obj: GameObj
   hop(): void
+  bump(): void
   grounded(): boolean
 }
 
@@ -16,7 +19,7 @@ export function setupPlayer(ctx: RideCtx): Player {
   const ink = hexToRgb(COLORS.locked)
   const x = Math.round(k.width() * PLAYER_X_FRAC)
 
-  const root = k.add([k.pos(x, GROUND_Y), k.z(10)])
+  const root = k.add([k.pos(x, GROUND_Y), k.rotate(0), k.z(10)])
 
   root.add([k.circle(6), k.pos(-10, -6), k.color(...ink)])
   root.add([k.circle(6), k.pos(10, -6), k.color(...ink)])
@@ -27,6 +30,7 @@ export function setupPlayer(ctx: RideCtx): Player {
 
   let vy = 0
   let grounded = true
+  let bumpT = 0
 
   root.onUpdate(() => {
     if (!grounded) {
@@ -41,6 +45,13 @@ export function setupPlayer(ctx: RideCtx): Player {
       const bounce = (Math.sin(k.time() * BOB.freq) * 0.5 + 0.5) * BOB.amp
       root.pos.y = GROUND_Y - bounce
     }
+
+    if (bumpT > 0) {
+      bumpT = Math.max(0, bumpT - k.dt())
+      root.angle = Math.sin(bumpT * 40) * 8 * (bumpT / BUMP_TIME)
+    } else if (root.angle !== 0) {
+      root.angle = 0
+    }
   })
 
   const hop = () => {
@@ -49,8 +60,12 @@ export function setupPlayer(ctx: RideCtx): Player {
     vy = HOP.velocity
   }
 
+  const bump = () => {
+    if (bumpT <= 0) bumpT = BUMP_TIME
+  }
+
   k.onMousePress(hop)
   k.onKeyPress('space', hop)
 
-  return { hop, grounded: () => grounded }
+  return { obj: root, hop, bump, grounded: () => grounded }
 }
