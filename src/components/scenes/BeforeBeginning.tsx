@@ -6,7 +6,7 @@ import { m, useScroll, useTransform, useReducedMotion } from 'framer-motion'
 import { fetchFeaturedPhoto } from '@/lib/supabase'
 import { cropImageStyle, DEFAULT_CROP, type Crop } from '@/lib/crop'
 
-type FirstPhoto = { url: string | null; crop: Crop }
+type FirstPhoto = { url: string | null; crop: Crop; caption: string | null }
 
 const P = {
   dusk:   '#5C4B8A', // Part A ground (night-leaning)
@@ -128,7 +128,7 @@ function Polaroid({ reduced, first }: { reduced: boolean; first: FirstPhoto }) {
         className="font-serif italic"
         style={{ marginTop: 14, textAlign: 'center', color: P.ink, opacity: 0.7, fontSize: 15 }}
       >
-        us ♡
+        {first.caption || 'us ♡'}
       </p>
     </m.div>
   )
@@ -137,7 +137,7 @@ function Polaroid({ reduced, first }: { reduced: boolean; first: FirstPhoto }) {
 export default function BeforeBeginning() {
   const reduced = useReducedMotion() ?? false
   const ref = useRef<HTMLElement>(null)
-  const [first, setFirst] = useState<FirstPhoto>({ url: null, crop: DEFAULT_CROP })
+  const [first, setFirst] = useState<FirstPhoto>({ url: null, crop: DEFAULT_CROP, caption: null })
 
   useEffect(() => {
     let cancelled = false
@@ -147,6 +147,7 @@ export default function BeforeBeginning() {
         setFirst({
           url: r.image_url,
           crop: { posX: r.pos_x, posY: r.pos_y, zoom: r.zoom, orient: r.orient },
+          caption: r.caption,
         })
       })
       .catch(() => {}) // placeholder stays — frame still renders
