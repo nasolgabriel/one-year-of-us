@@ -1,0 +1,45 @@
+import type { KAPLAYCtx } from 'kaplay'
+
+export type GamePhase = 'idle' | 'riding' | 'memory' | 'pickup' | 'finished'
+
+export type ActId = 1 | 2 | 3
+
+export type CollectibleKind = 'heart' | 'polaroid' | 'yarn' | 'butterfly'
+
+export type ObstacleKind = 'flowerPot' | 'puddle' | 'fence' | 'dog' | 'hose'
+
+export type MilestoneDef = {
+  id: number
+  act: ActId
+  distance: number
+  title: string
+  date: string
+  caption: string
+  photoUrl: string | null
+}
+
+// Events flow game → React. The only way the game talks to the DOM.
+export type GameEvents = {
+  onMilestone(def: MilestoneDef): void
+  onSophiePickup(): void
+  onCollect(kind: CollectibleKind): void
+  onFinish(): void
+}
+
+// Commands flow React → game. The only way the DOM talks to the game.
+export type GameHandle = {
+  start(): void
+  resumeFromMemory(): void
+  pause(): void
+  resume(): void
+  destroy(): void
+}
+
+// Shared context passed to every game module. `phase` is written only by
+// createRideGame; modules read it.
+export type RideCtx = {
+  k: KAPLAYCtx
+  events: GameEvents
+  phase: GamePhase
+  distance: number
+}
