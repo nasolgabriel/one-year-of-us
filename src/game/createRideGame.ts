@@ -1,5 +1,5 @@
 import kaplay from 'kaplay'
-import { SKY_COLOR, VIRTUAL_HEIGHT } from './config'
+import { SKY_STOPS, TIMELINE, VIRTUAL_HEIGHT } from './config'
 import { setupPlayer } from './player'
 import { setupSpawner } from './spawner'
 import { hexToRgb, setupWorld } from './world'
@@ -20,7 +20,7 @@ export function createRideGame(canvas: HTMLCanvasElement, events: GameEvents): G
     crisp: true,
     pixelDensity: 1,
     touchToMouse: true,
-    background: hexToRgb(SKY_COLOR),
+    background: hexToRgb(SKY_STOPS[0][1]),
   })
 
   const ctx: RideCtx = { k, events, phase: 'idle', distance: 0, speedScale: 0 }
@@ -28,6 +28,17 @@ export function createRideGame(canvas: HTMLCanvasElement, events: GameEvents): G
   setupWorld(ctx)
   const player = setupPlayer(ctx)
   setupSpawner(ctx, player)
+
+  // Timeline supervisor — the only place `phase` is written outside the
+  // handle. Watches the distance clock for story beats.
+  k.onUpdate(() => {
+    if (ctx.phase === 'riding' && ctx.distance >= TIMELINE.finish) {
+      ctx.phase = 'finished'
+      k.tween(ctx.speedScale, 0, 1.4, (v) => (ctx.speedScale = v), k.easings.easeOutQuad).onEnd(
+        () => events.onFinish(),
+      )
+    }
+  })
 
   return {
     start() {
@@ -48,6 +59,12 @@ export function createRideGame(canvas: HTMLCanvasElement, events: GameEvents): G
     },
     destroy() {
       k.quit()
+    },
+    setDistance(d) {
+      ctx.distance = d
+    },
+    getDistance() {
+      return ctx.distance
     },
   }
 }

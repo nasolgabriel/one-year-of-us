@@ -33,6 +33,9 @@ export type GameHandle = {
   pause(): void
   resume(): void
   destroy(): void
+  // Dev-harness helpers — the site scene never calls these.
+  setDistance(d: number): void
+  getDistance(): number
 }
 
 // Shared context passed to every game module. `phase` is written only by

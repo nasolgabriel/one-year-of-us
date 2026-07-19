@@ -1,5 +1,5 @@
 import { COLORS } from '@/lib/constants'
-import { COLLECT_RADIUS, SPAWN } from './config'
+import { actAt, COLLECT_RADIUS, SPAWN, type Act } from './config'
 import { GROUND_Y, hexToRgb } from './world'
 import type { Player } from './player'
 import type { CollectibleKind, ObstacleKind, RideCtx } from './types'
@@ -16,17 +16,18 @@ const OBSTACLES: Record<ObstacleKind, { w: number; h: number; color: string }> =
 }
 
 // Floating collectibles; y is the height band above the ground they hover in.
+// Yarn is Sophie's — it only appears once she's in the basket (act 3).
 const COLLECTIBLES: Record<
   Exclude<CollectibleKind, 'butterfly'>,
-  { w: number; h: number; color: string; y: [number, number]; weight: number }
+  { w: number; h: number; color: string; y: [number, number]; weight: number; act3Only?: boolean }
 > = {
   heart:    { w: 6, h: 6,  color: COLORS.pinkDeep,  y: [18, 46], weight: 6 },
   polaroid: { w: 8, h: 10, color: COLORS.peachSoft, y: [24, 40], weight: 1 },
-  yarn:     { w: 8, h: 8,  color: COLORS.mint,      y: [6, 10],  weight: 2 },
+  yarn:     { w: 8, h: 8,  color: COLORS.mint,      y: [6, 10],  weight: 2, act3Only: true },
 }
 
-function pickCollectible(): keyof typeof COLLECTIBLES {
-  const entries = Object.entries(COLLECTIBLES)
+function pickCollectible(act: Act): keyof typeof COLLECTIBLES {
+  const entries = Object.entries(COLLECTIBLES).filter(([, spec]) => !(spec.act3Only && act === 1))
   const total = entries.reduce((sum, [, spec]) => sum + spec.weight, 0)
   let roll = Math.random() * total
   for (const [kind, spec] of entries) {
@@ -67,7 +68,7 @@ export function setupSpawner(ctx: RideCtx, player: Player) {
   }
 
   const spawnCollectible = () => {
-    const kind = pickCollectible()
+    const kind = pickCollectible(actAt(ctx.distance))
     const spec = COLLECTIBLES[kind]
     k.add([
       k.rect(spec.w, spec.h),

@@ -14,6 +14,33 @@ export const PLAYER_X_FRAC = 0.25
 // World scroll speed at full ride pace, virtual px/sec.
 export const RIDE_SPEED = 120
 
+// The whole ride on one distance axis (virtual px). ~60s alone, a wordless
+// pickup beat, then ~95s together at RIDE_SPEED.
+export const TIMELINE = {
+  sophiePickup: 7200,
+  finish: 18600,
+} as const
+
+export type Act = 1 | 3
+
+// Act 2 is the pickup moment itself, not a stretch of road.
+export function actAt(distance: number): Act {
+  return distance < TIMELINE.sophiePickup ? 1 : 3
+}
+
+// Background colour stops across the ride — morning green into golden hour.
+export const SKY_STOPS: [number, string][] = [
+  [0, COLORS.green],
+  [TIMELINE.sophiePickup, COLORS.green],
+  [TIMELINE.finish, COLORS.peach],
+]
+
+export const GROUND_STOPS: [number, string][] = [
+  [0, COLORS.amber],
+  [TIMELINE.sophiePickup, COLORS.amber],
+  [TIMELINE.finish, COLORS.twilight],
+]
+
 export const HOP = {
   velocity: -260,
   gravity: 640,
@@ -44,5 +71,3 @@ export const BUMP_TIME = 0.45
 // Scrolling objects are destroyed once past this x.
 export const SCROLL_CULL_X = -40
 
-export const SKY_COLOR = COLORS.green
-export const GROUND_COLOR = COLORS.amber

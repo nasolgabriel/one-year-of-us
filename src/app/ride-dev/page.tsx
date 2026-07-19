@@ -9,6 +9,14 @@ export default function RideDevPage() {
   const holderRef = useRef<HTMLDivElement>(null)
   const handleRef = useRef<GameHandle | null>(null)
   const [phase, setPhase] = useState<'booting' | 'idle' | 'riding'>('booting')
+  const [distance, setDistance] = useState(0)
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setDistance(Math.round(handleRef.current?.getDistance() ?? 0))
+    }, 300)
+    return () => window.clearInterval(id)
+  }, [])
 
   useEffect(() => {
     const holder = holderRef.current
@@ -84,7 +92,31 @@ export default function RideDevPage() {
           pointerEvents: 'none',
         }}
       >
-        ride-dev · {phase}
+        ride-dev · {phase} · d {distance}
+      </div>
+
+      <div style={{ position: 'absolute', bottom: 8, left: 8, display: 'flex', gap: 6 }}>
+        {[
+          ['act1', 2000],
+          ['act3', 8000],
+          ['finish', 18300],
+        ].map(([label, d]) => (
+          <button
+            key={label}
+            onClick={() => handleRef.current?.setDistance(d as number)}
+            className="font-sans"
+            style={{
+              padding: '4px 10px',
+              background: 'rgba(0,0,0,0.5)',
+              color: '#FAEEDA',
+              fontSize: 11,
+              borderRadius: 4,
+              border: '1px solid rgba(250,238,218,0.3)',
+            }}
+          >
+            {label}
+          </button>
+        ))}
       </div>
     </main>
   )
