@@ -10,6 +10,7 @@ import Hero from '@/components/scenes/Hero'
 import PhotoPreloader from '@/components/PhotoPreloader'
 
 const BeforeBeginning = dynamic(() => import('@/components/scenes/BeforeBeginning'), { ssr: false })
+const TheRide = dynamic(() => import('@/components/scenes/TheRide'), { ssr: false })
 const Album = dynamic(() => import('@/components/scenes/Album'), { ssr: false })
 
 export default function Home() {
@@ -37,6 +38,7 @@ export default function Home() {
         <>
           <Hero />
           <BeforeBeginning />
+          <TheRide />
           <Album />
         </>
       )}

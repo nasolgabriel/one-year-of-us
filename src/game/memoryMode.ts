@@ -1,6 +1,7 @@
+import type { TimerController } from 'kaplay'
 import { COLORS } from '@/lib/constants'
 import { MEMORY } from './config'
-import { hexToRgb } from './world'
+import { hexToRgb, spawnPetal } from './world'
 import type { RideCtx } from './types'
 
 export type MemoryMode = {
@@ -22,8 +23,11 @@ export function setupMemoryMode(ctx: RideCtx): MemoryMode {
     k.z(50),
   ])
 
+  let petalLoop: TimerController | null = null
+
   return {
     enter(onSettled) {
+      petalLoop = k.loop(0.5, () => spawnPetal(k, Math.random() * k.width(), -6))
       k.tween(
         ctx.speedScale,
         MEMORY.slowScale,
@@ -37,6 +41,8 @@ export function setupMemoryMode(ctx: RideCtx): MemoryMode {
       }
     },
     exit() {
+      petalLoop?.cancel()
+      petalLoop = null
       k.tween(
         ctx.speedScale,
         1,

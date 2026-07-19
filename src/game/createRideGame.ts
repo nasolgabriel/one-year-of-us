@@ -3,6 +3,7 @@ import { SKY_STOPS, TIMELINE, VIRTUAL_HEIGHT } from './config'
 import { setupMemoryMode } from './memoryMode'
 import { MILESTONES } from './milestones'
 import { setupPlayer } from './player'
+import { setupSophiePickup } from './sophiePickup'
 import { setupSpawner } from './spawner'
 import { hexToRgb, setupWorld } from './world'
 import type { GameEvents, GameHandle, RideCtx } from './types'
@@ -31,17 +32,20 @@ export function createRideGame(canvas: HTMLCanvasElement, events: GameEvents): G
   const player = setupPlayer(ctx)
   setupSpawner(ctx, player)
   const memory = setupMemoryMode(ctx)
+  setupSophiePickup(ctx, player, {
+    onSequenceStart: () => {
+      ctx.phase = 'pickup'
+    },
+    onSequenceEnd: () => {
+      ctx.phase = 'riding'
+    },
+  })
 
   // Timeline supervisor — the only place `phase` is written outside the
-  // handle. Watches the distance clock for story beats. Jumping the distance
-  // backwards (dev harness) re-arms any milestones now ahead of the rider.
+  // handle. Watches the distance clock for story beats.
   let nextMilestone = 0
   k.onUpdate(() => {
     if (ctx.phase !== 'riding') return
-
-    while (nextMilestone > 0 && ctx.distance < MILESTONES[nextMilestone - 1].distance) {
-      nextMilestone--
-    }
 
     if (nextMilestone < MILESTONES.length && ctx.distance >= MILESTONES[nextMilestone].distance) {
       const def = MILESTONES[nextMilestone]
@@ -81,6 +85,9 @@ export function createRideGame(canvas: HTMLCanvasElement, events: GameEvents): G
     },
     setDistance(d) {
       ctx.distance = d
+      // Jumped-over milestones must not fire; ones now ahead re-arm.
+      const idx = MILESTONES.findIndex((def) => def.distance > d)
+      nextMilestone = idx === -1 ? MILESTONES.length : idx
     },
     getDistance() {
       return ctx.distance

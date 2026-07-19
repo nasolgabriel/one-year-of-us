@@ -55,6 +55,12 @@ export const BOB = {
 // Path dash marks — distance between spawns, virtual px.
 export const DASH_SPACING = 90
 
+// Ambient decoration pacing.
+export const DECOR = {
+  tuftSpacing: 150,
+  petalEvery: 1.1,
+} as const
+
 // Distance gaps between spawns, [min, max] virtual px. Distance-based, so the
 // memory-mode slowdown stretches spawn timing for free.
 export const SPAWN = {
@@ -75,6 +81,18 @@ export const MEMORY = {
   slowdown: 0.8,
   speedup: 0.8,
   overlayOpacity: 0.16,
+} as const
+
+// Act 2 pickup beat. Sophie spawns `lead` px of road before the pickup point
+// and rides in with the world; the bike brakes once she reaches `stopX`
+// (fraction of viewport width). All times in seconds.
+export const SOPHIE = {
+  lead: 200,
+  stopX: 0.55,
+  stopTime: 0.7,
+  swishTime: 0.9,
+  arcTime: 0.55,
+  restartDelay: 0.6,
 } as const
 
 // Scrolling objects are destroyed once past this x.
