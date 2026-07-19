@@ -1,8 +1,17 @@
 import type { GameObj } from 'kaplay'
 import { COLORS } from '@/lib/constants'
-import { buildBasketSophie } from './art'
+import {
+  emit,
+  hexToRgb,
+  motionFxOps,
+  RIDER_B,
+  riderBodyOps,
+  riderLegsOps,
+  sophieBasketHeadOps,
+  spokeOps,
+} from './sprites'
 import { BOB, BUMP_TIME, HOP, PLAYER_X_FRAC } from './config'
-import { GROUND_Y, hexToRgb } from './world'
+import { GROUND_Y } from './world'
 import type { RideCtx } from './types'
 
 export type Player = {
@@ -13,64 +22,50 @@ export type Player = {
   setSophie(inBasket: boolean): void
 }
 
-// Bike + rider composed from primitives, side view facing right. Root is
-// anchored at the ground contact point between the wheels so hop physics and
-// ground snapping stay one number. Layout constants below are the drawing —
-// tuning-worthy numbers stay in config.
+// The art-pass rider, 40×36 virtual px, pixel-composed 1:1 from
+// ride-sprites.js — variant B "mint step-through". Root is anchored at the
+// ground contact point between the wheels (sprite (20, 36)) so hop physics
+// and ground snapping stay one number.
+const OX = -20
+const OY = -36
+
+// Wheel hubs in sprite space — spin groups rotate around these.
+const HUBS: [number, number][] = [[10, 29], [30, 29]]
+
+// One full pedal cycle = two pose swaps; seconds per swap at full pace.
+const PEDAL_STEP = 0.22
+
 export function setupPlayer(ctx: RideCtx): Player {
   const { k } = ctx
-  const ink = hexToRgb(COLORS.locked)
-  const inkSoft = hexToRgb(COLORS.lockedSoft)
-  const shirt = hexToRgb(COLORS.accentAlt)
-  const skin = hexToRgb(COLORS.peach)
-  const basketC = hexToRgb(COLORS.amber)
-  const basketDark = hexToRgb(COLORS.twilightDark)
 
   const x = Math.round(k.width() * PLAYER_X_FRAC)
   const root = k.add([k.pos(x, GROUND_Y), k.rotate(0), k.scale(1), k.z(10)])
 
-  // Wheels — tire + rim static, spokes in a spinning subgroup.
-  const spinners: GameObj[] = []
-  for (const wx of [-11, 11]) {
-    root.add([k.circle(7), k.pos(wx, -7), k.color(...ink)])
-    root.add([k.circle(4.5), k.pos(wx, -7), k.color(...inkSoft)])
-    const spin = root.add([k.pos(wx, -7), k.rotate(0)])
-    spin.add([k.rect(1.2, 11), k.pos(-0.6, -5.5), k.color(...ink)])
-    const cross = spin.add([k.pos(0, 0), k.rotate(90)])
-    cross.add([k.rect(1.2, 11), k.pos(-0.6, -5.5), k.color(...ink)])
-    root.add([k.circle(1.2), k.pos(wx, -7), k.color(...hexToRgb(COLORS.peachSoft))])
-    spinners.push(spin)
-  }
+  // Legs render under the frame, so they're added first.
+  const legPoses: GameObj[] = [0 as const, 1 as const].map((pose) => {
+    const g = root.add([k.pos(0, 0)])
+    emit(k, g, riderLegsOps(RIDER_B, pose), OX, OY)
+    return g
+  })
+  legPoses[1].hidden = true
 
-  // Frame, seat, fork, handlebar.
-  root.add([k.rect(11, 2), k.pos(-11, -8.5), k.color(...ink)])
-  root.add([k.circle(2), k.pos(0, -8), k.color(...inkSoft)])
-  root.add([k.rect(2, 9), k.pos(-7, -17), k.color(...ink)])
-  root.add([k.rect(15, 2), k.pos(-7, -18), k.color(...ink)])
-  root.add([k.rect(2, 9), k.pos(10, -17), k.color(...ink)])
-  root.add([k.rect(6, 2.5), k.pos(-10, -20.5), k.color(...ink)])
-  root.add([k.rect(2, 5), k.pos(10, -22), k.color(...ink)])
-  root.add([k.rect(4, 2), k.pos(8, -23.5), k.color(...ink)])
+  emit(k, root, riderBodyOps(RIDER_B), OX, OY)
 
-  // Basket on the front — Sophie's seat from Act 2 on.
-  root.add([k.rect(9, 7), k.pos(13, -21), k.color(...basketC)])
-  root.add([k.rect(9, 1), k.pos(13, -18.5), k.color(...basketDark), k.opacity(0.4)])
-  root.add([k.rect(9, 1), k.pos(13, -16.5), k.color(...basketDark), k.opacity(0.4)])
-  root.add([k.rect(10, 1.5), k.pos(12.5, -22), k.color(...basketDark)])
+  const spinners: GameObj[] = HUBS.map(([hx, hy]) => {
+    const spin = root.add([k.pos(OX + hx, OY + hy), k.rotate(0)])
+    emit(k, spin, spokeOps())
+    return spin
+  })
 
-  // Rider — legs first (behind frame reads better), then torso, arm, head.
-  const legs: GameObj[] = []
-  for (let i = 0; i < 2; i++) {
-    legs.push(root.add([k.rect(2.5, 8), k.pos(-7, -20), k.rotate(0), k.color(...ink)]))
-  }
-  root.add([k.rect(4.5, 11), k.pos(-3, -30), k.rotate(-22), k.color(...shirt)])
-  root.add([k.rect(2, 12.5), k.pos(-2, -29), k.rotate(61), k.color(...shirt)])
-  root.add([k.circle(3.7), k.pos(-2.2, -33.8), k.color(...ink)])
-  root.add([k.circle(3.6), k.pos(-1.5, -33), k.color(...skin)])
+  // Speed dashes + dust behind the bike — screen-fixed, fade with world pace.
+  const fx = k.add([k.pos(x, GROUND_Y), k.z(9)])
+  emit(k, fx, motionFxOps())
+  const fxBase = fx.children.map((c: GameObj) => c.opacity as number)
 
   let vy = 0
   let grounded = true
   let bumpT = 0
+  let pedalT = 0
 
   const land = () => {
     root.scale = k.vec2(1.06, 0.92)
@@ -108,14 +103,16 @@ export function setupPlayer(ctx: RideCtx): Player {
       spin.angle += ctx.speedScale * 520 * k.dt()
     }
 
-    if (!grounded) {
-      legs[0].angle = 34
-      legs[1].angle = 22
-    } else {
-      const swing = Math.sin(k.time() * 7) * 26 * Math.max(ctx.speedScale, 0.15)
-      legs[0].angle = 8 + swing
-      legs[1].angle = 8 - swing
-    }
+    fx.children.forEach((c: GameObj, i: number) => {
+      c.opacity = fxBase[i] * ctx.speedScale
+    })
+
+    // Pixel pedalling — alternate the two leg poses with the world pace;
+    // airborne holds pose A.
+    if (grounded) pedalT += Math.max(ctx.speedScale, 0.15) * k.dt()
+    const pose = grounded ? Math.floor(pedalT / PEDAL_STEP) % 2 : 0
+    legPoses[0].hidden = pose !== 0
+    legPoses[1].hidden = pose !== 1
 
     if (bumpT > 0) {
       bumpT = Math.max(0, bumpT - k.dt())
@@ -139,8 +136,8 @@ export function setupPlayer(ctx: RideCtx): Player {
   let basketSophie: GameObj | null = null
   const setSophie = (inBasket: boolean) => {
     if (inBasket && !basketSophie) {
-      basketSophie = root.add([k.pos(17, -22), k.z(1)])
-      buildBasketSophie(k, basketSophie)
+      basketSophie = root.add([k.pos(0, 0), k.z(1)])
+      emit(k, basketSophie, sophieBasketHeadOps(), OX + 31, OY + 6)
     } else if (!inBasket && basketSophie) {
       basketSophie.destroy()
       basketSophie = null

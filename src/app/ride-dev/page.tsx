@@ -36,6 +36,7 @@ export default function RideDevPage() {
           console.log('[ride-dev] milestone', def.id)
           setMilestone(def)
         },
+        onPickupStart: () => console.log('[ride-dev] pickup start'),
         onSophiePickup: () => console.log('[ride-dev] sophie pickup'),
         onCollect: (kind) => console.log('[ride-dev] collect', kind),
         onFinish: () => console.log('[ride-dev] finish'),

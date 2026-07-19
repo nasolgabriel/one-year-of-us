@@ -4,13 +4,19 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, m } from 'framer-motion'
 import { useLenis } from 'lenis/react'
 import MemoryCard from '@/components/ui/MemoryCard'
+import RideHud, { HudChip } from '@/components/ui/RideHud'
+import { TIMELINE } from '@/game/config'
+import { MILESTONES } from '@/game/milestones'
 import type { GameHandle, MilestoneDef } from '@/game/types'
 
 const P = {
   bg: '#97C459',
   ink: '#1A1A2E',
   cream: '#FAEEDA',
+  wine: '#4B1528',
 } as const
+
+const MS_POSITIONS = MILESTONES.map((def) => (def.distance / TIMELINE.finish) * 100)
 
 // Scene 4 — the pixel bike ride. The kaplay game boots lazily when the section
 // approaches the viewport; page scroll locks while riding (same lock/release
@@ -26,6 +32,11 @@ export default function TheRide() {
   const [started, setStarted] = useState(false)
   const [finished, setFinished] = useState(false)
   const [milestone, setMilestone] = useState<MilestoneDef | null>(null)
+  const [distance, setDistance] = useState(0)
+  const [hearts, setHearts] = useState(0)
+  const [inPickup, setInPickup] = useState(false)
+  const [sophieAboard, setSophieAboard] = useState(false)
+  const [hopped, setHopped] = useState(false)
 
   const lock = () => {
     lenis?.stop()
@@ -44,6 +55,7 @@ export default function TheRide() {
     const holder = holderRef.current
     if (!section || !holder) return
     let cancelled = false
+    let capTimer = 0
 
     const boot = () => {
       const canvas = document.createElement('canvas')
@@ -55,8 +67,12 @@ export default function TheRide() {
         if (cancelled) return
         handleRef.current = createRideGame(canvas, {
           onMilestone: setMilestone,
-          onSophiePickup: () => {},
-          onCollect: () => {},
+          onPickupStart: () => setInPickup(true),
+          onSophiePickup: () => {
+            setSophieAboard(true)
+            capTimer = window.setTimeout(() => setInPickup(false), 1400)
+          },
+          onCollect: () => setHearts((h) => h + 1),
           onFinish: () => {
             setFinished(true)
             unlock()
@@ -80,6 +96,7 @@ export default function TheRide() {
     return () => {
       cancelled = true
       io.disconnect()
+      window.clearTimeout(capTimer)
       handleRef.current?.destroy()
       handleRef.current = null
       canvasRef.current?.remove()
@@ -101,6 +118,30 @@ export default function TheRide() {
     io.observe(section)
     return () => io.disconnect()
   }, [ready])
+
+  // Distance clock → HUD progress, polled gently; the game stays canvas-side.
+  useEffect(() => {
+    if (!started || finished) return
+    const id = window.setInterval(() => {
+      setDistance(handleRef.current?.getDistance() ?? 0)
+    }, 200)
+    return () => window.clearInterval(id)
+  }, [started, finished])
+
+  // First hop dismisses the hint chip.
+  useEffect(() => {
+    if (!started || hopped) return
+    const dismiss = (e: Event) => {
+      if (e instanceof KeyboardEvent && e.code !== 'Space') return
+      setHopped(true)
+    }
+    window.addEventListener('pointerdown', dismiss)
+    window.addEventListener('keydown', dismiss)
+    return () => {
+      window.removeEventListener('pointerdown', dismiss)
+      window.removeEventListener('keydown', dismiss)
+    }
+  }, [started, hopped])
 
   const start = () => {
     const section = sectionRef.current
@@ -131,6 +172,14 @@ export default function TheRide() {
     })
   }
 
+  const act = finished
+    ? 'act iii · the end'
+    : inPickup && !sophieAboard
+      ? 'act ii · a small hello'
+      : sophieAboard
+        ? 'act iii · together'
+        : 'act i · riding alone'
+
   return (
     <section
       ref={sectionRef}
@@ -138,6 +187,84 @@ export default function TheRide() {
       style={{ height: '100dvh', background: P.bg }}
     >
       <div ref={holderRef} className="absolute inset-0" />
+
+      {/* Vignette + grain — same treatment as the art pass screens. */}
+      <div
+        className="pointer-events-none absolute inset-0 z-5"
+        style={{
+          background: 'radial-gradient(120% 90% at 50% 42%, transparent 55%, rgba(75,21,40,0.16))',
+        }}
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 z-5"
+        style={{ backgroundImage: 'url(/grain.png)', backgroundRepeat: 'repeat', opacity: 0.05 }}
+        aria-hidden
+      />
+
+      {started && (
+        <RideHud
+          act={act}
+          hearts={hearts}
+          progress={(distance / TIMELINE.finish) * 100}
+          milestones={MS_POSITIONS}
+          passed={MILESTONES.map((def) => distance >= def.distance)}
+          dim={milestone !== null}
+        />
+      )}
+
+      {/* "tap to hop ✧" — fades out after the first hop. */}
+      <AnimatePresence>
+        {started && !hopped && !finished && (
+          <m.div
+            className="pointer-events-none absolute inset-x-0 z-10 flex justify-center"
+            style={{ bottom: 22 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.6 } }}
+          >
+            <HudChip>tap to hop ✧</HudChip>
+          </m.div>
+        )}
+      </AnimatePresence>
+
+      {/* Act 2 capline while the world slows for Sophie. */}
+      <AnimatePresence>
+        {inPickup && (
+          <m.div
+            className="pointer-events-none absolute inset-x-0 z-10 text-center"
+            style={{ bottom: 58 }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <span
+              className="font-serif italic"
+              style={{
+                fontWeight: 600,
+                fontSize: 15,
+                lineHeight: 1.4,
+                color: P.cream,
+                textShadow: '0 1px 0 rgba(75,21,40,0.3)',
+              }}
+            >
+              she&rsquo;s been waiting here&hellip;
+            </span>
+            <span
+              className="mt-1.5 block font-sans uppercase"
+              style={{
+                fontWeight: 700,
+                fontSize: 8,
+                letterSpacing: '0.3em',
+                color: 'rgba(250,238,218,0.65)',
+              }}
+            >
+              the world slows to a stop
+            </span>
+          </m.div>
+        )}
+      </AnimatePresence>
 
       {!started && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-6 px-6">
@@ -180,18 +307,42 @@ export default function TheRide() {
       <AnimatePresence>
         {finished && (
           <m.div
-            className="absolute inset-0 z-10 flex flex-col items-center justify-end pb-16"
+            className="absolute inset-0 z-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8 }}
           >
-            <button
-              onClick={leave}
-              className="font-serif italic"
-              style={{ color: P.ink, fontSize: 16, opacity: 0.8 }}
+            <div
+              className="pointer-events-none absolute inset-x-0 text-center"
+              style={{ top: '20%' }}
             >
-              and the ride goes on ↓
-            </button>
+              <span
+                className="font-serif italic"
+                style={{ fontWeight: 600, fontSize: 19, lineHeight: 1.4, color: P.wine }}
+              >
+                and there you were ♡
+              </span>
+              <span
+                className="mt-1.5 block font-sans uppercase"
+                style={{
+                  fontWeight: 700,
+                  fontSize: 8,
+                  letterSpacing: '0.3em',
+                  color: 'rgba(75,21,40,0.6)',
+                }}
+              >
+                18.6 km · every heart counted
+              </span>
+            </div>
+            <div className="absolute inset-x-0 bottom-16 flex justify-center">
+              <button
+                onClick={leave}
+                className="font-serif italic"
+                style={{ color: P.wine, fontSize: 16, opacity: 0.8 }}
+              >
+                and the ride goes on ↓
+              </button>
+            </div>
           </m.div>
         )}
       </AnimatePresence>

@@ -41,6 +41,21 @@ export const GROUND_STOPS: [number, string][] = [
   [TIMELINE.finish, COLORS.twilight],
 ]
 
+// Hills and the grass fringe recolor with the sunset; the fringe leads so the
+// roadside warms slightly ahead of the far hills (art pass scene 03).
+export const HILL_STOPS: [number, string][] = [
+  [0, COLORS.mintDark],
+  [TIMELINE.sophiePickup, COLORS.mintDark],
+  [TIMELINE.finish, COLORS.rose],
+]
+
+export const FRINGE_STOPS: [number, string][] = [
+  [0, COLORS.mintDark],
+  [TIMELINE.sophiePickup, COLORS.mintDark],
+  [TIMELINE.sophiePickup + (TIMELINE.finish - TIMELINE.sophiePickup) * 0.8, COLORS.rose],
+  [TIMELINE.finish, COLORS.rose],
+]
+
 export const HOP = {
   velocity: -260,
   gravity: 640,
@@ -93,6 +108,12 @@ export const SOPHIE = {
   swishTime: 0.9,
   arcTime: 0.55,
   restartDelay: 0.6,
+} as const
+
+// Finish tableau — spawned so the garland/she/balloon come to rest on screen
+// after the brake tween. brakeDistance ≈ RIDE_SPEED · 1.4s · ∫easeOutQuad = /3.
+export const FINISH_ART = {
+  brakeDistance: 56,
 } as const
 
 // Scrolling objects are destroyed once past this x.

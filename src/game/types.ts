@@ -21,6 +21,7 @@ export type MilestoneDef = {
 // Events flow game → React. The only way the game talks to the DOM.
 export type GameEvents = {
   onMilestone(def: MilestoneDef): void
+  onPickupStart(): void
   onSophiePickup(): void
   onCollect(kind: CollectibleKind): void
   onFinish(): void

@@ -1,5 +1,6 @@
 import kaplay from 'kaplay'
 import { SKY_STOPS, TIMELINE, VIRTUAL_HEIGHT } from './config'
+import { setupFinishTableau } from './finish'
 import { setupMemoryMode } from './memoryMode'
 import { MILESTONES } from './milestones'
 import { setupPlayer } from './player'
@@ -32,9 +33,11 @@ export function createRideGame(canvas: HTMLCanvasElement, events: GameEvents): G
   const player = setupPlayer(ctx)
   setupSpawner(ctx, player)
   const memory = setupMemoryMode(ctx)
+  setupFinishTableau(ctx)
   setupSophiePickup(ctx, player, {
     onSequenceStart: () => {
       ctx.phase = 'pickup'
+      events.onPickupStart()
     },
     onSequenceEnd: () => {
       ctx.phase = 'riding'
