@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import type { GameHandle } from '@/game/types'
+import { AnimatePresence } from 'framer-motion'
+import MemoryCard from '@/components/ui/MemoryCard'
+import type { GameHandle, MilestoneDef } from '@/game/types'
 
 // Dev harness for the ride game — graybox tuning only, never linked from the
 // site. Delete before final deploy (same rule as /tune).
@@ -10,6 +12,7 @@ export default function RideDevPage() {
   const handleRef = useRef<GameHandle | null>(null)
   const [phase, setPhase] = useState<'booting' | 'idle' | 'riding'>('booting')
   const [distance, setDistance] = useState(0)
+  const [milestone, setMilestone] = useState<MilestoneDef | null>(null)
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -29,7 +32,10 @@ export default function RideDevPage() {
     import('@/game/createRideGame').then(({ createRideGame }) => {
       if (cancelled) return
       handle = createRideGame(canvas, {
-        onMilestone: (def) => console.log('[ride-dev] milestone', def),
+        onMilestone: (def) => {
+          console.log('[ride-dev] milestone', def.id)
+          setMilestone(def)
+        },
         onSophiePickup: () => console.log('[ride-dev] sophie pickup'),
         onCollect: (kind) => console.log('[ride-dev] collect', kind),
         onFinish: () => console.log('[ride-dev] finish'),
@@ -95,7 +101,20 @@ export default function RideDevPage() {
         ride-dev · {phase} · d {distance}
       </div>
 
-      <div style={{ position: 'absolute', bottom: 8, left: 8, display: 'flex', gap: 6 }}>
+      <AnimatePresence>
+        {milestone && (
+          <MemoryCard
+            key={milestone.id}
+            milestone={milestone}
+            onResume={() => {
+              setMilestone(null)
+              handleRef.current?.resumeFromMemory()
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <div style={{ position: 'absolute', bottom: 8, right: 8, display: 'flex', gap: 6 }}>
         {[
           ['act1', 2000],
           ['act3', 8000],

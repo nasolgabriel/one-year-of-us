@@ -68,6 +68,15 @@ export const COLLECT_RADIUS = 16
 // Bump wobble duration after clipping an obstacle, seconds.
 export const BUMP_TIME = 0.45
 
+// Memory mode — the world settles to slowScale over `slowdown` seconds, the
+// card shows, then speeds back up over `speedup` on "keep riding →".
+export const MEMORY = {
+  slowScale: 0.2,
+  slowdown: 0.8,
+  speedup: 0.8,
+  overlayOpacity: 0.16,
+} as const
+
 // Scrolling objects are destroyed once past this x.
 export const SCROLL_CULL_X = -40
 

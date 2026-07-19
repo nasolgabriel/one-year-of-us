@@ -1,5 +1,7 @@
 import kaplay from 'kaplay'
 import { SKY_STOPS, TIMELINE, VIRTUAL_HEIGHT } from './config'
+import { setupMemoryMode } from './memoryMode'
+import { MILESTONES } from './milestones'
 import { setupPlayer } from './player'
 import { setupSpawner } from './spawner'
 import { hexToRgb, setupWorld } from './world'
@@ -28,11 +30,28 @@ export function createRideGame(canvas: HTMLCanvasElement, events: GameEvents): G
   setupWorld(ctx)
   const player = setupPlayer(ctx)
   setupSpawner(ctx, player)
+  const memory = setupMemoryMode(ctx)
 
   // Timeline supervisor — the only place `phase` is written outside the
-  // handle. Watches the distance clock for story beats.
+  // handle. Watches the distance clock for story beats. Jumping the distance
+  // backwards (dev harness) re-arms any milestones now ahead of the rider.
+  let nextMilestone = 0
   k.onUpdate(() => {
-    if (ctx.phase === 'riding' && ctx.distance >= TIMELINE.finish) {
+    if (ctx.phase !== 'riding') return
+
+    while (nextMilestone > 0 && ctx.distance < MILESTONES[nextMilestone - 1].distance) {
+      nextMilestone--
+    }
+
+    if (nextMilestone < MILESTONES.length && ctx.distance >= MILESTONES[nextMilestone].distance) {
+      const def = MILESTONES[nextMilestone]
+      nextMilestone++
+      ctx.phase = 'memory'
+      memory.enter(() => events.onMilestone(def))
+      return
+    }
+
+    if (ctx.distance >= TIMELINE.finish) {
       ctx.phase = 'finished'
       k.tween(ctx.speedScale, 0, 1.4, (v) => (ctx.speedScale = v), k.easings.easeOutQuad).onEnd(
         () => events.onFinish(),
@@ -49,7 +68,7 @@ export function createRideGame(canvas: HTMLCanvasElement, events: GameEvents): G
     resumeFromMemory() {
       if (ctx.phase !== 'memory') return
       ctx.phase = 'riding'
-      ctx.speedScale = 1
+      memory.exit()
     },
     pause() {
       k.debug.paused = true

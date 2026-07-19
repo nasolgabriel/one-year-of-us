@@ -61,6 +61,7 @@ export function setupSpawner(ctx: RideCtx, player: Player) {
       k.rect(spec.w, spec.h),
       k.pos(k.width() + 20, GROUND_Y - spec.h),
       k.color(...hexToRgb(spec.color)),
+      k.opacity(1),
       'scrolling',
       'obstacle',
       { halfW: spec.w / 2, hit: false },
