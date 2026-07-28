@@ -18,14 +18,14 @@ const P = {
 } as const
 
 const PART_A = [
-  'before you, my days were quieter…',
-  'i thought i knew what love meant.',
-  'i had no idea.',
+  'before you, life was simple…',
+  'quiet days, ordinary moments.',
+  'then i met you.',
 ]
 const PART_B = [
-  'then i saw you…',
-  'and everything made sense.',
-  'and so the ride began…',
+  'you came into my life…',
+  'one conversation became another.',
+  'and little by little, before i knew it, we were writing our story together.',
 ]
 
 function StoryLine({
