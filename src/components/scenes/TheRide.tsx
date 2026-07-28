@@ -5,9 +5,8 @@ import { AnimatePresence, m } from 'framer-motion'
 import { useLenis } from 'lenis/react'
 import MemoryCard from '@/components/ui/MemoryCard'
 import RideHud, { HudChip } from '@/components/ui/RideHud'
-import { TIMELINE } from '@/game/config'
-import { MILESTONES } from '@/game/milestones'
-import type { GameHandle, MilestoneDef } from '@/game/types'
+import { fetchRideSettings } from '@/lib/rideData'
+import type { GameHandle, MilestoneDef, RideSettings } from '@/game/types'
 
 const P = {
   bg: '#97C459',
@@ -15,8 +14,6 @@ const P = {
   cream: '#FAEEDA',
   wine: '#4B1528',
 } as const
-
-const MS_POSITIONS = MILESTONES.map((def) => (def.distance / TIMELINE.finish) * 100)
 
 // Scene 4 — the pixel bike ride. The kaplay game boots lazily when the section
 // approaches the viewport; page scroll locks while riding (same lock/release
@@ -29,6 +26,7 @@ export default function TheRide() {
   const lenis = useLenis()
 
   const [ready, setReady] = useState(false)
+  const [settings, setSettings] = useState<RideSettings | null>(null)
   const [started, setStarted] = useState(false)
   const [finished, setFinished] = useState(false)
   const [milestone, setMilestone] = useState<MilestoneDef | null>(null)
@@ -63,23 +61,32 @@ export default function TheRide() {
       canvas.tabIndex = 0
       canvas.style.outline = 'none'
       holder.appendChild(canvas)
-      import('@/game/createRideGame').then(({ createRideGame }) => {
-        if (cancelled) return
-        handleRef.current = createRideGame(canvas, {
-          onMilestone: setMilestone,
-          onPickupStart: () => setInPickup(true),
-          onSophiePickup: () => {
-            setSophieAboard(true)
-            capTimer = window.setTimeout(() => setInPickup(false), 1400)
-          },
-          onCollect: () => setHearts((h) => h + 1),
-          onFinish: () => {
-            setFinished(true)
-            unlock()
-          },
-        })
-        setReady(true)
-      })
+      // Milestones + timeline come from Supabase (tuned via /game-tune);
+      // fetchRideSettings falls back to defaults if the fetch fails.
+      Promise.all([import('@/game/createRideGame'), fetchRideSettings()]).then(
+        ([{ createRideGame }, rideSettings]) => {
+          if (cancelled) return
+          setSettings(rideSettings)
+          handleRef.current = createRideGame(
+            canvas,
+            {
+              onMilestone: setMilestone,
+              onPickupStart: () => setInPickup(true),
+              onSophiePickup: () => {
+                setSophieAboard(true)
+                capTimer = window.setTimeout(() => setInPickup(false), 1400)
+              },
+              onCollect: () => setHearts((h) => h + 1),
+              onFinish: () => {
+                setFinished(true)
+                unlock()
+              },
+            },
+            rideSettings,
+          )
+          setReady(true)
+        },
+      )
     }
 
     const io = new IntersectionObserver(
@@ -202,13 +209,15 @@ export default function TheRide() {
         aria-hidden
       />
 
-      {started && (
+      {started && settings && (
         <RideHud
           act={act}
           hearts={hearts}
-          progress={(distance / TIMELINE.finish) * 100}
-          milestones={MS_POSITIONS}
-          passed={MILESTONES.map((def) => distance >= def.distance)}
+          progress={(distance / settings.timeline.finish) * 100}
+          milestones={settings.milestones.map(
+            (def) => (def.distance / settings.timeline.finish) * 100,
+          )}
+          passed={settings.milestones.map((def) => distance >= def.distance)}
           dim={milestone !== null}
         />
       )}
@@ -331,7 +340,7 @@ export default function TheRide() {
                   color: 'rgba(75,21,40,0.6)',
                 }}
               >
-                18.6 km · every heart counted
+                {((settings?.timeline.finish ?? 18600) / 1000).toFixed(1)} km · every heart counted
               </span>
             </div>
             <div className="absolute inset-x-0 bottom-16 flex justify-center">

@@ -1,6 +1,6 @@
 import { COLORS } from '@/lib/constants'
 import { balloonOps, emit, garlandOps, miniHeartOps, rieOps, sparkleOps } from './sprites'
-import { FINISH_ART, PLAYER_X_FRAC, TIMELINE } from './config'
+import { FINISH_ART, PLAYER_X_FRAC } from './config'
 import { GROUND_Y } from './world'
 import type { RideCtx } from './types'
 
@@ -15,7 +15,7 @@ export function setupFinishTableau(ctx: RideCtx) {
   // Rest position puts her ~59vpx ahead of the rider's wheel line.
   const restX = W * PLAYER_X_FRAC - 24
   const spawnX = W + 20
-  const trigger = TIMELINE.finish + FINISH_ART.brakeDistance - spawnX + restX
+  const trigger = ctx.timeline.finish + FINISH_ART.brakeDistance - spawnX + restX
 
   let spawned = false
   k.onUpdate(() => {

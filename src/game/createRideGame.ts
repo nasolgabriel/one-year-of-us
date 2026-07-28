@@ -1,15 +1,20 @@
 import kaplay from 'kaplay'
-import { SKY_STOPS, TIMELINE, VIRTUAL_HEIGHT } from './config'
+import { COLORS } from '@/lib/constants'
+import { VIRTUAL_HEIGHT } from './config'
 import { setupFinishTableau } from './finish'
 import { setupMemoryMode } from './memoryMode'
-import { MILESTONES } from './milestones'
+import { setupMilestonePolaroid } from './milestonePolaroid'
 import { setupPlayer } from './player'
 import { setupSophiePickup } from './sophiePickup'
 import { setupSpawner } from './spawner'
 import { hexToRgb, setupWorld } from './world'
-import type { GameEvents, GameHandle, RideCtx } from './types'
+import type { GameEvents, GameHandle, RideCtx, RideSettings } from './types'
 
-export function createRideGame(canvas: HTMLCanvasElement, events: GameEvents): GameHandle {
+export function createRideGame(
+  canvas: HTMLCanvasElement,
+  events: GameEvents,
+  settings: RideSettings,
+): GameHandle {
   const holder = canvas.parentElement
   const holderW = holder?.clientWidth || 375
   const holderH = holder?.clientHeight || 667
@@ -24,10 +29,17 @@ export function createRideGame(canvas: HTMLCanvasElement, events: GameEvents): G
     crisp: true,
     pixelDensity: 1,
     touchToMouse: true,
-    background: hexToRgb(SKY_STOPS[0][1]),
+    background: hexToRgb(COLORS.green),
   })
 
-  const ctx: RideCtx = { k, events, phase: 'idle', distance: 0, speedScale: 0 }
+  const ctx: RideCtx = {
+    k,
+    events,
+    phase: 'idle',
+    distance: 0,
+    speedScale: 0,
+    timeline: settings.timeline,
+  }
 
   setupWorld(ctx)
   const player = setupPlayer(ctx)
@@ -44,21 +56,17 @@ export function createRideGame(canvas: HTMLCanvasElement, events: GameEvents): G
     },
   })
 
-  // Timeline supervisor — the only place `phase` is written outside the
-  // handle. Watches the distance clock for story beats.
-  let nextMilestone = 0
+  // Memory mode fires when the rider catches a milestone polaroid — the
+  // polaroid module owns spawn/catch; the phase write stays here.
+  const milestones = setupMilestonePolaroid(ctx, player, settings.milestones, (def) => {
+    ctx.phase = 'memory'
+    memory.enter(() => events.onMilestone(def))
+  })
+
+  // Timeline supervisor — watches the distance clock for the finish beat.
   k.onUpdate(() => {
     if (ctx.phase !== 'riding') return
-
-    if (nextMilestone < MILESTONES.length && ctx.distance >= MILESTONES[nextMilestone].distance) {
-      const def = MILESTONES[nextMilestone]
-      nextMilestone++
-      ctx.phase = 'memory'
-      memory.enter(() => events.onMilestone(def))
-      return
-    }
-
-    if (ctx.distance >= TIMELINE.finish) {
+    if (ctx.distance >= ctx.timeline.finish) {
       ctx.phase = 'finished'
       k.tween(ctx.speedScale, 0, 1.4, (v) => (ctx.speedScale = v), k.easings.easeOutQuad).onEnd(
         () => events.onFinish(),
@@ -88,9 +96,7 @@ export function createRideGame(canvas: HTMLCanvasElement, events: GameEvents): G
     },
     setDistance(d) {
       ctx.distance = d
-      // Jumped-over milestones must not fire; ones now ahead re-arm.
-      const idx = MILESTONES.findIndex((def) => def.distance > d)
-      nextMilestone = idx === -1 ? MILESTONES.length : idx
+      milestones.sync(d)
     },
     getDistance() {
       return ctx.distance

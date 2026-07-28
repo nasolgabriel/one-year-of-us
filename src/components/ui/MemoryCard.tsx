@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { m } from 'framer-motion'
 import { PixelHeartSvg } from '@/components/ui/RideHud'
+import { cropImageStyle } from '@/lib/crop'
 import type { MilestoneDef } from '@/game/types'
 
 const INK = '#4B1528'
@@ -110,7 +111,7 @@ export default function MemoryCard({
               alt={milestone.title}
               fill
               sizes="640px"
-              style={{ objectFit: 'cover' }}
+              style={cropImageStyle(milestone.crop)}
             />
           ) : (
             <>

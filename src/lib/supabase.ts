@@ -19,7 +19,7 @@ export type PhotoUpdate = Partial<Omit<Photo, 'id' | 'image_url'>>
 const PHOTO_COLS =
   'id, order_index, image_url, title, caption, rotation, pos_x, pos_y, zoom, orient, featured'
 
-const supabase = createClient(
+export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 )

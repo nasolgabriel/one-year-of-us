@@ -5,14 +5,10 @@ import {
   actAt,
   DASH_SPACING,
   DECOR,
-  FRINGE_STOPS,
   GROUND_HEIGHT,
-  GROUND_STOPS,
-  HILL_STOPS,
+  makeStops,
   RIDE_SPEED,
   SCROLL_CULL_X,
-  SKY_STOPS,
-  TIMELINE,
   VIRTUAL_HEIGHT,
 } from './config'
 import type { RideCtx } from './types'
@@ -65,6 +61,21 @@ export function worldSpeed(ctx: RideCtx): number {
   return RIDE_SPEED * ctx.speedScale
 }
 
+// Four-way pixel burst — collect feedback, shared by the spawner and the
+// milestone polaroid.
+export function spawnBurst(k: KAPLAYCtx, x: number, y: number, color: string) {
+  for (const angle of [45, 135, 225, 315]) {
+    k.add([
+      k.rect(2, 2),
+      k.pos(x, y),
+      k.color(...hexToRgb(color)),
+      k.opacity(1),
+      k.move(angle, 46),
+      k.lifespan(0.35, { fade: 0.3 }),
+    ])
+  }
+}
+
 // Ground strip, sun, clouds, parallax hills, ambient petals, and the scroll
 // driver. Everything tagged 'scrolling' moves left at world speed and is
 // culled off the left edge; 'parallax' strips move at a fraction of it and
@@ -75,6 +86,7 @@ export function setupWorld(ctx: RideCtx) {
   const { k } = ctx
   const W = k.width()
   const H = k.height()
+  const stops = makeStops(ctx.timeline)
 
   // Sun — starts small and high, ends big and low on the horizon at golden
   // hour, nesting into the hills. Pixel-ring halo per the art pass sun().
@@ -133,7 +145,7 @@ export function setupWorld(ctx: RideCtx) {
   const ground = k.add([
     k.rect(W, GROUND_HEIGHT),
     k.pos(0, GROUND_Y),
-    k.color(...hexToRgb(GROUND_STOPS[0][1])),
+    k.color(...hexToRgb(stops.ground[0][1])),
     k.z(2),
   ])
   const groundEdge = k.add([
@@ -150,7 +162,7 @@ export function setupWorld(ctx: RideCtx) {
   let flowerIdx = 0
   let fringeCount = 0
   const spawnFringe = (x: number) => {
-    const tintHex = `#${sampleStops(FRINGE_STOPS, ctx.distance)
+    const tintHex = `#${sampleStops(stops.fringe, ctx.distance)
       .map((v) => v.toString(16).padStart(2, '0'))
       .join('')}`
     const f = k.add([k.pos(x, GROUND_Y), k.z(3), 'scrolling'])
@@ -181,16 +193,16 @@ export function setupWorld(ctx: RideCtx) {
   let petalTimer = 0
 
   k.onUpdate(() => {
-    k.setBackground(k.rgb(...sampleStops(SKY_STOPS, ctx.distance)))
-    ground.color = k.rgb(...sampleStops(GROUND_STOPS, ctx.distance))
+    k.setBackground(k.rgb(...sampleStops(stops.sky, ctx.distance)))
+    ground.color = k.rgb(...sampleStops(stops.ground, ctx.distance))
 
-    const hillC = k.rgb(...sampleStops(HILL_STOPS, ctx.distance))
-    const fringeC = k.rgb(...sampleStops(FRINGE_STOPS, ctx.distance))
+    const hillC = k.rgb(...sampleStops(stops.hill, ctx.distance))
+    const fringeC = k.rgb(...sampleStops(stops.fringe, ctx.distance))
     for (const h of hillObjs) h.color = hillC
     for (const f of fringeObjs) f.color = fringeC
     groundEdge.color = fringeC
 
-    const t = Math.min(1, ctx.distance / TIMELINE.finish)
+    const t = Math.min(1, ctx.distance / ctx.timeline.finish)
     sun.pos.x = W * lerp(0.82, 0.58, t)
     sun.pos.y = H * lerp(0.125, 0.7, t)
     const s = lerp(1, 1.85, t)
@@ -244,7 +256,7 @@ export function setupWorld(ctx: RideCtx) {
     }
 
     // Golden-hour petals drift through act 3.
-    if (ctx.phase === 'riding' && actAt(ctx.distance) === 3) {
+    if (ctx.phase === 'riding' && actAt(ctx.distance, ctx.timeline.pickup) === 3) {
       petalTimer += k.dt()
       if (petalTimer >= DECOR.petalEvery) {
         petalTimer = 0

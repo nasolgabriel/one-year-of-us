@@ -1,4 +1,5 @@
 import { COLORS } from '@/lib/constants'
+import type { RideTimeline } from './types'
 
 // Fixed virtual height; width is derived from the container aspect at boot so
 // the game fills its section with no letterbox bars. All sizes below are in
@@ -14,47 +15,49 @@ export const PLAYER_X_FRAC = 0.25
 // World scroll speed at full ride pace, virtual px/sec.
 export const RIDE_SPEED = 120
 
-// The whole ride on one distance axis (virtual px). ~60s alone, a wordless
-// pickup beat, then ~95s together at RIDE_SPEED.
-export const TIMELINE = {
-  sophiePickup: 7200,
-  finish: 18600,
-} as const
+// Fallback timeline when Supabase is unreachable: ~60s alone, a wordless
+// pickup beat, then ~95s together at RIDE_SPEED. The live values come from
+// the ride_config row via /game-tune.
+export const DEFAULT_TIMELINE: RideTimeline = { pickup: 7200, finish: 18600 }
 
 export type Act = 1 | 3
 
 // Act 2 is the pickup moment itself, not a stretch of road.
-export function actAt(distance: number): Act {
-  return distance < TIMELINE.sophiePickup ? 1 : 3
+export function actAt(distance: number, pickup: number): Act {
+  return distance < pickup ? 1 : 3
 }
 
-// Background colour stops across the ride — morning green into golden hour.
-export const SKY_STOPS: [number, string][] = [
-  [0, COLORS.green],
-  [TIMELINE.sophiePickup, COLORS.green],
-  [TIMELINE.finish, COLORS.peach],
-]
-
-export const GROUND_STOPS: [number, string][] = [
-  [0, COLORS.amber],
-  [TIMELINE.sophiePickup, COLORS.amber],
-  [TIMELINE.finish, COLORS.twilight],
-]
-
-// Hills and the grass fringe recolor with the sunset; the fringe leads so the
-// roadside warms slightly ahead of the far hills (art pass scene 03).
-export const HILL_STOPS: [number, string][] = [
-  [0, COLORS.mintDark],
-  [TIMELINE.sophiePickup, COLORS.mintDark],
-  [TIMELINE.finish, COLORS.rose],
-]
-
-export const FRINGE_STOPS: [number, string][] = [
-  [0, COLORS.mintDark],
-  [TIMELINE.sophiePickup, COLORS.mintDark],
-  [TIMELINE.sophiePickup + (TIMELINE.finish - TIMELINE.sophiePickup) * 0.8, COLORS.rose],
-  [TIMELINE.finish, COLORS.rose],
-]
+// Background colour stops across the ride — morning green into golden hour,
+// built at boot from the runtime timeline. Hills and the grass fringe recolor
+// with the sunset; the fringe leads so the roadside warms slightly ahead of
+// the far hills (art pass scene 03).
+export function makeStops(
+  t: RideTimeline,
+): Record<'sky' | 'ground' | 'hill' | 'fringe', [number, string][]> {
+  return {
+    sky: [
+      [0, COLORS.green],
+      [t.pickup, COLORS.green],
+      [t.finish, COLORS.peach],
+    ],
+    ground: [
+      [0, COLORS.amber],
+      [t.pickup, COLORS.amber],
+      [t.finish, COLORS.twilight],
+    ],
+    hill: [
+      [0, COLORS.mintDark],
+      [t.pickup, COLORS.mintDark],
+      [t.finish, COLORS.rose],
+    ],
+    fringe: [
+      [0, COLORS.mintDark],
+      [t.pickup, COLORS.mintDark],
+      [t.pickup + (t.finish - t.pickup) * 0.8, COLORS.rose],
+      [t.finish, COLORS.rose],
+    ],
+  }
+}
 
 export const HOP = {
   velocity: -260,

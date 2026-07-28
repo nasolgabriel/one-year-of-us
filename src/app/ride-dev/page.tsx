@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import MemoryCard from '@/components/ui/MemoryCard'
-import type { GameHandle, MilestoneDef } from '@/game/types'
+import { fetchRideSettings } from '@/lib/rideData'
+import type { GameHandle, MilestoneDef, RideSettings } from '@/game/types'
 
 // Dev harness for the ride game — graybox tuning only, never linked from the
 // site. Delete before final deploy (same rule as /tune).
@@ -13,6 +14,7 @@ export default function RideDevPage() {
   const [phase, setPhase] = useState<'booting' | 'idle' | 'riding'>('booting')
   const [distance, setDistance] = useState(0)
   const [milestone, setMilestone] = useState<MilestoneDef | null>(null)
+  const [settings, setSettings] = useState<RideSettings | null>(null)
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -29,21 +31,28 @@ export default function RideDevPage() {
     const canvas = document.createElement('canvas')
     holder.appendChild(canvas)
 
-    import('@/game/createRideGame').then(({ createRideGame }) => {
-      if (cancelled) return
-      handle = createRideGame(canvas, {
-        onMilestone: (def) => {
-          console.log('[ride-dev] milestone', def.id)
-          setMilestone(def)
-        },
-        onPickupStart: () => console.log('[ride-dev] pickup start'),
-        onSophiePickup: () => console.log('[ride-dev] sophie pickup'),
-        onCollect: (kind) => console.log('[ride-dev] collect', kind),
-        onFinish: () => console.log('[ride-dev] finish'),
-      })
-      handleRef.current = handle
-      setPhase('idle')
-    })
+    Promise.all([import('@/game/createRideGame'), fetchRideSettings()]).then(
+      ([{ createRideGame }, rideSettings]) => {
+        if (cancelled) return
+        setSettings(rideSettings)
+        handle = createRideGame(
+          canvas,
+          {
+            onMilestone: (def) => {
+              console.log('[ride-dev] milestone', def.id)
+              setMilestone(def)
+            },
+            onPickupStart: () => console.log('[ride-dev] pickup start'),
+            onSophiePickup: () => console.log('[ride-dev] sophie pickup'),
+            onCollect: (kind) => console.log('[ride-dev] collect', kind),
+            onFinish: () => console.log('[ride-dev] finish'),
+          },
+          rideSettings,
+        )
+        handleRef.current = handle
+        setPhase('idle')
+      },
+    )
 
     return () => {
       cancelled = true
@@ -116,11 +125,13 @@ export default function RideDevPage() {
       </AnimatePresence>
 
       <div style={{ position: 'absolute', bottom: 8, right: 8, display: 'flex', gap: 6 }}>
-        {[
-          ['act1', 2000],
-          ['act3', 8000],
-          ['finish', 18300],
-        ].map(([label, d]) => (
+        {(
+          [
+            ['act1', Math.round((settings?.timeline.pickup ?? 7200) * 0.3)],
+            ['act3', (settings?.timeline.pickup ?? 7200) + 800],
+            ['finish', (settings?.timeline.finish ?? 18600) - 300],
+          ] as const
+        ).map(([label, d]) => (
           <button
             key={label}
             onClick={() => handleRef.current?.setDistance(d as number)}

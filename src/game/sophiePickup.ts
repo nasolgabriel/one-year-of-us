@@ -10,7 +10,7 @@ import {
   zGlyphOps,
 } from './sprites'
 import { S } from './sprites'
-import { SOPHIE, TIMELINE } from './config'
+import { SOPHIE } from './config'
 import { GROUND_Y } from './world'
 import type { Player } from './player'
 import type { RideCtx } from './types'
@@ -117,7 +117,7 @@ export function setupSophiePickup(ctx: RideCtx, player: Player, callbacks: Picku
 
   k.onUpdate(() => {
     if (done) return
-    if (!spawned && ctx.phase === 'riding' && ctx.distance >= TIMELINE.sophiePickup - SOPHIE.lead) {
+    if (!spawned && ctx.phase === 'riding' && ctx.distance >= ctx.timeline.pickup - SOPHIE.lead) {
       spawned = true
       sophie = spawnSleepingSophie()
     }

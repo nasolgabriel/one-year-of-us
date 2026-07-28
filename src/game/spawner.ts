@@ -8,18 +8,19 @@ import {
   dogOps,
   heartHiOps,
   hoseOps,
-  polaroidOps,
   puddleOps,
   yarnOps,
 } from './sprites'
 import { actAt, COLLECT_RADIUS, SPAWN, type Act } from './config'
-import { GROUND_Y, hexToRgb } from './world'
+import { GROUND_Y, spawnBurst } from './world'
 import type { Player } from './player'
 import type { CollectibleKind, ObstacleKind, RideCtx } from './types'
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min)
 
-const PAPER = '#FFFDF7' // established polaroid-paper token (Album uses the same)
+// Polaroids are not in the random pool — they only appear at milestone
+// checkpoints (see milestonePolaroid.ts).
+type AmbientCollectible = Exclude<CollectibleKind, 'polaroid'>
 
 // Collision footprints, sized per the art-pass sprite sheet — gentle things
 // only; a missed hop bumps, never fails.
@@ -35,11 +36,10 @@ const OBSTACLES: Record<ObstacleKind, { w: number; h: number }> = {
 // Yarn is Sophie's — it only appears once she's in the basket (act 3).
 // The butterfly is the rare bonus.
 const COLLECTIBLES: Record<
-  CollectibleKind,
+  AmbientCollectible,
   { tint: string; y: [number, number]; weight: number; act3Only?: boolean }
 > = {
   heart:     { tint: COLORS.pinkDeep, y: [18, 46], weight: 6 },
-  polaroid:  { tint: PAPER,           y: [24, 40], weight: 1 },
   yarn:      { tint: COLORS.mint,     y: [6, 12],  weight: 2, act3Only: true },
   butterfly: { tint: COLORS.pink,     y: [30, 52], weight: 1 },
 }
@@ -68,24 +68,10 @@ export function setupSpawner(ctx: RideCtx, player: Player) {
     hose:      (o) => emit(k, o, hoseOps(), -9, -4),
   }
 
-  const COLLECTIBLE_ART: Record<CollectibleKind, (c: GameObj) => void> = {
+  const COLLECTIBLE_ART: Record<AmbientCollectible, (c: GameObj) => void> = {
     heart:     (c) => emit(k, c, heartHiOps(COLORS.pinkDeep, COLORS.pink), -3.5, -3.5),
-    polaroid:  (c) => emit(k, c, polaroidOps(), -4, -5),
     yarn:      (c) => emit(k, c, yarnOps(), -4, -4),
     butterfly: (c) => emit(k, c, butterflyOps(), -3.5, -2),
-  }
-
-  const burst = (x: number, y: number, color: string) => {
-    for (const angle of [45, 135, 225, 315]) {
-      k.add([
-        k.rect(2, 2),
-        k.pos(x, y),
-        k.color(...hexToRgb(color)),
-        k.opacity(1),
-        k.move(angle, 46),
-        k.lifespan(0.35, { fade: 0.3 }),
-      ])
-    }
   }
 
   const spawnObstacle = () => {
@@ -104,7 +90,7 @@ export function setupSpawner(ctx: RideCtx, player: Player) {
   }
 
   const spawnCollectible = () => {
-    const kind = pickCollectible(actAt(ctx.distance))
+    const kind = pickCollectible(actAt(ctx.distance, ctx.timeline.pickup))
     const spec = COLLECTIBLES[kind]
     const baseY = GROUND_Y - rand(...spec.y)
     const c = k.add([
@@ -152,7 +138,7 @@ export function setupSpawner(ctx: RideCtx, player: Player) {
       const dx = c.pos.x - px
       const dy = c.pos.y - py
       if (dx * dx + dy * dy < COLLECT_RADIUS * COLLECT_RADIUS) {
-        burst(c.pos.x, c.pos.y, c.tint)
+        spawnBurst(k, c.pos.x, c.pos.y, c.tint)
         ctx.events.onCollect(c.kind)
         c.destroy()
       }
