@@ -452,7 +452,7 @@ export default function Hero() {
         </m.div>
       </m.div>
 
-      <Sophie variant="sleeping" className="absolute bottom-6 right-4 origin-bottom-right scale-[0.62]" />
+      <Sophie variant="sleeping" className="absolute bottom-6 right-4" />
 
       {bursts.map(b => <HeartBurst key={b.id} x={b.x} y={b.y} />)}
 

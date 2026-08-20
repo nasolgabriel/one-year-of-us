@@ -56,17 +56,29 @@ body {
   50%      { opacity: 0.14; }
 }
 
-/* Sophie's "z" puff — active for the first 40% then idle (emulates repeatDelay). */
+/* Sophie's "z" puff. Lengths are SVG user units (1 unit = 1 pixel-art pixel). */
 @keyframes sophie-z {
-  0%   { transform: translate3d(0, 0, 0);     opacity: 0; }
-  20%  { opacity: 0.6; }
-  40%  { transform: translate3d(0, -34px, 0); opacity: 0; }
-  100% { transform: translate3d(0, -34px, 0); opacity: 0; }
+  0%   { transform: translateY(0);      opacity: 0; }
+  15%  { opacity: 0.7; }
+  80%  { opacity: 0.25; }
+  100% { transform: translateY(-10px);  opacity: 0; }
 }
 
 @keyframes sophie-breathe {
-  0%, 100% { transform: translate3d(0, 0, 0)    scaleY(1); }
-  50%      { transform: translate3d(0, -2px, 0) scaleY(1.035); }
+  0%, 100% { transform: scaleY(1); }
+  50%      { transform: scaleY(1.035); }
+}
+
+/* Tail flick and ear twitch step between whole pixels — steps(1, end) keeps them
+   from landing on a half-pixel that would soften the crisp edges. */
+@keyframes sophie-tail-flick {
+  0%, 84%, 94%, 100% { transform: translateY(0); }
+  86%, 92%           { transform: translateY(-1px); }
+}
+
+@keyframes sophie-ear-twitch {
+  0%, 90%, 96%, 100% { transform: translateY(0); }
+  92%, 94%           { transform: translateY(-1px); }
 }
 
 /* Classes (not inline styles) reference the keyframes so Tailwind v4 / Lightning
@@ -84,11 +96,24 @@ body {
   will-change: opacity;
   animation: hero-bgheart var(--dur) ease-in-out var(--delay) infinite;
 }
+/* Groups transform about their own bounding box, so the breath scales from the
+   ground line under Sophie rather than the SVG viewBox origin. */
+.sophie-px g {
+  transform-box: fill-box;
+}
 .sophie-z {
+  opacity: 0;
   will-change: transform, opacity;
-  animation: sophie-z 6.7s ease-out var(--delay) infinite;
+  animation: sophie-z 4.2s linear var(--delay) infinite;
 }
 .sophie-breathe {
+  transform-origin: 50% 100%;
   will-change: transform;
   animation: sophie-breathe 3.8s ease-in-out infinite;
+}
+.sophie-tail-tip {
+  animation: sophie-tail-flick 5s steps(1, end) infinite;
+}
+.sophie-ear {
+  animation: sophie-ear-twitch 6.5s steps(1, end) infinite;
 }

@@ -1,21 +1,119 @@
 'use client'
 
-
-// Sophie — white + ginger bicolor cat, curled asleep.
+// Sophie — pixel build on the ride's 1-unit grid (see .claude/ride-sprites.js
+// `sophieHero`), so the hero cat and the in-game cat are literally the same art.
 const C = {
-  white:    '#FCF3E8', // body / chest / paws
-  whiteHi:  '#FFFFFF', // belly highlight
-  ginger:   '#E89456', // head cap, back patch, tail
-  gingerHi: '#F2A968', // tail / patch highlight
-  gingerLo: '#CC7339', // ginger shadow
-  outline:  '#8A6047', // soft warm-brown outline
-  innerEar: '#F2B3B8', // pink inner ear
-  nose:     '#E0859A', // pink nose
-  eye:      '#4A3322', // closed-eye arc
-  whisker:  'rgba(120,90,70,0.45)',
-  shadow:   'rgba(120,90,70,0.16)',
+  white:    '#FCF3E8',
+  whiteHi:  '#FFFFFF',
+  ginger:   '#E89456',
+  gingerHi: '#F2A968',
+  gingerLo: '#CC7339',
+  outline:  '#8A6047',
+  innerEar: '#F2B3B8',
+  nose:     '#E0859A',
+  eye:      '#4A3322',
   zColor:   '#CC7A42',
 } as const
+
+type Px = [x: number, y: number, c: string, w?: number, h?: number, o?: number]
+
+const SHADOW: Px[] = [
+  [3, 23, C.outline, 32, 2, 0.12],
+]
+
+const BODY: Px[] = [
+  [8, 10, C.white, 17, 1],
+  [6, 11, C.white, 21, 1],
+  [5, 12, C.white, 23, 1],
+  [4, 13, C.white, 25, 6],
+  [5, 19, C.white, 23, 1],
+  [6, 20, C.white, 21, 1],
+  [8, 10, C.ginger, 17, 1],
+  [7, 11, C.ginger, 14, 1],
+  [6, 12, C.ginger, 10, 1],
+  [9, 11, C.gingerHi, 6, 1, 0.6],
+  [6, 20, C.gingerLo, 21, 1, 0.3],
+  [25, 18, C.whiteHi, 3, 2],
+  [29, 18, C.whiteHi, 3, 2],
+  [26, 18, C.outline, 1, 1, 0.25],
+  [30, 18, C.outline, 1, 1, 0.25],
+]
+
+// Cream tail with ginger ring stripes; the tip lives in its own group so it can flick.
+const TAIL: Px[] = [
+  [2, 13, C.white, 2, 1],
+  [1, 14, C.white, 2, 6],
+  [1, 15, C.ginger, 2, 1],
+  [1, 18, C.ginger, 2, 1],
+  [2, 20, C.white, 2, 1],
+  [4, 20, C.white, 16, 2],
+  [4, 21, C.gingerLo, 16, 1, 0.3],
+  [7, 20, C.ginger, 2, 2],
+  [12, 20, C.ginger, 2, 2],
+  [17, 20, C.ginger, 2, 2],
+]
+
+const TAIL_TIP: Px[] = [
+  [20, 19, C.ginger, 3, 2],
+  [22, 18, C.ginger, 2, 2],
+  [23, 17, C.gingerHi, 1, 1, 0.7],
+]
+
+const HEAD: Px[] = [
+  [25, 6, C.white, 9, 1],
+  [24, 7, C.white, 11, 1],
+  [23, 8, C.white, 13, 8],
+  [24, 16, C.white, 11, 1],
+  [25, 17, C.white, 9, 1],
+  [25, 6, C.ginger, 9, 1],
+  [24, 7, C.ginger, 8, 1],
+  [23, 8, C.ginger, 5, 1],
+  [26, 7, C.gingerHi, 4, 1, 0.5],
+  [24, 3, C.ginger],
+  [23, 4, C.ginger, 3, 1],
+  [23, 5, C.ginger, 3, 1],
+  [24, 4, C.innerEar, 1, 1, 0.9],
+  [25, 11, C.eye],
+  [26, 12, C.eye, 2, 1],
+  [28, 11, C.eye],
+  [30, 11, C.eye],
+  [31, 12, C.eye, 2, 1],
+  [33, 11, C.eye],
+  [29, 14, C.nose],
+  [28, 15, C.outline, 1, 1, 0.5],
+  [30, 15, C.outline, 1, 1, 0.5],
+  [24, 13, C.innerEar, 2, 1, 0.5],
+  [33, 13, C.innerEar, 2, 1, 0.5],
+  [20, 12, C.outline, 2, 1, 0.4],
+  [20, 14, C.outline, 2, 1, 0.35],
+  [36, 12, C.outline, 2, 1, 0.4],
+  [36, 14, C.outline, 2, 1, 0.35],
+]
+
+const EAR_R: Px[] = [
+  [32, 3, C.ginger],
+  [31, 4, C.ginger, 3, 1],
+  [31, 5, C.ginger, 3, 1],
+  [32, 4, C.innerEar, 1, 1, 0.9],
+]
+
+const Z_GLYPH: Px[] = [
+  [0, 0, C.zColor, 3, 1, 0.9],
+  [1, 1, C.zColor, 1, 1, 0.9],
+  [0, 2, C.zColor, 3, 1, 0.9],
+]
+
+const Z_PUFFS = [
+  { x: 34, y: -3,  delay: 0   },
+  { x: 37, y: -8,  delay: 1.4 },
+  { x: 40, y: -13, delay: 2.8 },
+]
+
+function draw(pixels: Px[]) {
+  return pixels.map(([x, y, fill, w = 1, h = 1, o = 1], i) => (
+    <rect key={i} x={x} y={y} width={w} height={h} fill={fill} opacity={o} />
+  ))
+}
 
 type SophieVariant = 'sleeping'
 
@@ -26,106 +124,27 @@ interface SophieProps {
 
 function SleepingCat() {
   return (
-    <div style={{ width: 132, height: 104, position: 'relative' }}>
-      {/* floating z z z */}
-      {([
-        { left: 96, top: 20, size: 9,  delay: 0   },
-        { left: 105, top: 8, size: 11, delay: 1.3 },
-        { left: 116, top: -4, size: 14, delay: 2.6 },
-      ] as { left: number; top: number; size: number; delay: number }[]).map((z, i) => (
-        <span
-          key={i}
-          className="absolute select-none leading-none font-sans sophie-z"
-          style={{
-            left: z.left, top: z.top, fontSize: z.size, color: C.zColor,
-            '--delay': `${z.delay}s`,
-          } as React.CSSProperties}
-        >
-          z
-        </span>
+    <svg
+      viewBox="0 -24 44 50"
+      shapeRendering="crispEdges"
+      className="sophie-px"
+      style={{ display: 'block', width: 'clamp(88px, 10vw, 110px)', height: 'auto' }}
+    >
+      <g>{draw(SHADOW)}</g>
+      <g className="sophie-breathe">
+        <g>{draw(BODY)}</g>
+        <g>{draw(HEAD)}</g>
+        <g className="sophie-ear">{draw(EAR_R)}</g>
+      </g>
+      <g>{draw(TAIL)}</g>
+      <g className="sophie-tail-tip">{draw(TAIL_TIP)}</g>
+      {Z_PUFFS.map((z, i) => (
+        <g key={i} className="sophie-z" style={{ '--delay': `${z.delay}s` } as React.CSSProperties}>
+          {/* Placement sits on an inner group — the animation owns `transform` on the outer one. */}
+          <g transform={`translate(${z.x} ${z.y})`}>{draw(Z_GLYPH)}</g>
+        </g>
       ))}
-
-      <svg
-        width={132} height={104}
-        viewBox="0 0 132 104"
-        fill="none"
-        className="sophie-breathe"
-        style={{
-          display: 'block', position: 'absolute', bottom: 0, left: 0,
-          overflow: 'visible', transformOrigin: '66px 96px',
-        }}
-      >
-        {/* ground shadow */}
-        <ellipse cx={64} cy={97} rx={52} ry={6} fill={C.shadow} />
-
-        {/* tail — wraps from back-left around the front, tip resting by the face */}
-        <path
-          d="M 30 64 C 4 66 2 96 32 95 C 60 94 84 90 96 76"
-          stroke={C.gingerLo} strokeWidth={17} strokeLinecap="round" fill="none"
-        />
-        <path
-          d="M 30 64 C 6 66 5 93 32 92 C 58 91 82 87 95 74"
-          stroke={C.ginger} strokeWidth={13} strokeLinecap="round" fill="none"
-        />
-        <path
-          d="M 34 64 C 14 67 13 88 34 87"
-          stroke={C.gingerHi} strokeWidth={4} strokeLinecap="round" fill="none" opacity={0.7}
-        />
-
-        {/* curled body */}
-        <ellipse
-          cx={58} cy={64} rx={47} ry={28}
-          fill={C.white} stroke={C.outline} strokeWidth={2.5}
-        />
-        {/* ginger back patch */}
-        <path
-          d="M 30 44 Q 56 33 84 44 Q 80 60 56 60 Q 36 58 30 44 Z"
-          fill={C.ginger}
-        />
-        <path
-          d="M 34 45 Q 54 37 74 44"
-          stroke={C.gingerHi} strokeWidth={3} strokeLinecap="round" fill="none" opacity={0.6}
-        />
-        {/* belly highlight */}
-        <ellipse cx={54} cy={78} rx={30} ry={9} fill={C.whiteHi} opacity={0.6} />
-
-        {/* ears (outer) */}
-        <path d="M 75 38 L 80 13 L 96 34 Z" fill={C.ginger} stroke={C.outline} strokeWidth={2.5} strokeLinejoin="round" />
-        <path d="M 99 33 L 113 14 L 117 40 Z" fill={C.ginger} stroke={C.outline} strokeWidth={2.5} strokeLinejoin="round" />
-        {/* inner ears */}
-        <path d="M 81 34 L 84 21 L 92 33 Z" fill={C.innerEar} />
-        <path d="M 103 32 L 111 22 L 113 36 Z" fill={C.innerEar} />
-
-        {/* head — tucked low on the right */}
-        <circle cx={97} cy={56} r={24} fill={C.white} stroke={C.outline} strokeWidth={2.5} />
-        {/* ginger cap on head */}
-        <path
-          d="M 75 50 Q 97 30 119 51 Q 116 40 108 33 Q 86 26 82 40 Q 76 44 75 50 Z"
-          fill={C.ginger}
-        />
-        <path
-          d="M 97 31 Q 109 34 116 47"
-          stroke={C.gingerHi} strokeWidth={3} strokeLinecap="round" fill="none" opacity={0.55}
-        />
-
-        {/* closed sleeping eyes */}
-        <path d="M 86 57 Q 90 62 94 57" stroke={C.eye} strokeWidth={2.4} strokeLinecap="round" fill="none" />
-        <path d="M 103 57 Q 107 62 111 57" stroke={C.eye} strokeWidth={2.4} strokeLinecap="round" fill="none" />
-
-        {/* nose + mouth */}
-        <path d="M 97 65 L 101 65 L 99 68 Z" fill={C.nose} />
-        <path d="M 99 68 Q 99 71 96 71 M 99 68 Q 99 71 102 71" stroke={C.outline} strokeWidth={1.6} strokeLinecap="round" fill="none" />
-
-        {/* whiskers */}
-        <path d="M 95 66 Q 80 64 70 67 M 95 69 Q 80 70 71 74" stroke={C.whisker} strokeWidth={1.4} strokeLinecap="round" fill="none" />
-        <path d="M 103 66 Q 117 64 124 67 M 103 69 Q 117 70 123 74" stroke={C.whisker} strokeWidth={1.4} strokeLinecap="round" fill="none" />
-
-        {/* tucked front paws */}
-        <ellipse cx={70} cy={86} rx={11} ry={7} fill={C.white} stroke={C.outline} strokeWidth={2} />
-        <ellipse cx={88} cy={88} rx={11} ry={7} fill={C.white} stroke={C.outline} strokeWidth={2} />
-        <path d="M 70 81 L 70 86 M 88 83 L 88 88" stroke={C.outline} strokeWidth={1.3} strokeLinecap="round" opacity={0.5} />
-      </svg>
-    </div>
+    </svg>
   )
 }
 

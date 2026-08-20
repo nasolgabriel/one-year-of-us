@@ -35,15 +35,24 @@ export default function TheRide() {
   const [inPickup, setInPickup] = useState(false)
   const [sophieAboard, setSophieAboard] = useState(false)
   const [hopped, setHopped] = useState(false)
+  const lockScrollY = useRef(0)
 
   const lock = () => {
     lenis?.stop()
+    lockScrollY.current = window.scrollY
     document.documentElement.style.overflow = 'hidden'
-    document.body.style.overflow = 'hidden'
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${lockScrollY.current}px`
+    document.body.style.left = '0'
+    document.body.style.right = '0'
   }
   const unlock = () => {
     document.documentElement.style.overflow = ''
-    document.body.style.overflow = ''
+    document.body.style.position = ''
+    document.body.style.top = ''
+    document.body.style.left = ''
+    document.body.style.right = ''
+    window.scrollTo(0, lockScrollY.current)
     lenis?.start()
   }
 

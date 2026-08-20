@@ -91,7 +91,7 @@ export default function RideHud({
               fontVariantNumeric: 'tabular-nums',
             }}
           >
-            ×&hairsp;{hearts}
+            ×{' '}{hearts}
           </b>
         </HudChip>
       </div>
