@@ -1,7 +1,17 @@
 import kaplay from 'kaplay'
 import { COLORS } from '@/lib/constants'
 import { VIRTUAL_HEIGHT } from './config'
+import {
+  destroyAudio,
+  initAudio,
+  resetCombo,
+  setAudioSuspended,
+  sfxFinish,
+  sfxMilestone,
+  unlockAudio,
+} from './audio'
 import { setupFinishTableau } from './finish'
+import { setupHitFlash } from './hitFlash'
 import { setupMemoryMode } from './memoryMode'
 import { setupMilestonePolaroid } from './milestonePolaroid'
 import { setupPlayer } from './player'
@@ -41,9 +51,12 @@ export function createRideGame(
     timeline: settings.timeline,
   }
 
+  initAudio(k.audioCtx)
+
   setupWorld(ctx)
   const player = setupPlayer(ctx)
-  setupSpawner(ctx, player)
+  const hitFlash = setupHitFlash(ctx)
+  setupSpawner(ctx, player, hitFlash)
   const memory = setupMemoryMode(ctx)
   setupFinishTableau(ctx)
   setupSophiePickup(ctx, player, {
@@ -60,6 +73,8 @@ export function createRideGame(
   // polaroid module owns spawn/catch; the phase write stays here.
   const milestones = setupMilestonePolaroid(ctx, player, settings.milestones, (def) => {
     ctx.phase = 'memory'
+    resetCombo()
+    sfxMilestone()
     memory.enter(() => events.onMilestone(def))
   })
 
@@ -68,6 +83,7 @@ export function createRideGame(
     if (ctx.phase !== 'riding') return
     if (ctx.distance >= ctx.timeline.finish) {
       ctx.phase = 'finished'
+      sfxFinish()
       k.tween(ctx.speedScale, 0, 1.4, (v) => (ctx.speedScale = v), k.easings.easeOutQuad).onEnd(
         () => events.onFinish(),
       )
@@ -77,6 +93,9 @@ export function createRideGame(
   return {
     start() {
       if (ctx.phase !== 'idle') return
+      // The only real user gesture the game gets — kaplay builds its
+      // AudioContext at boot, from an observer callback, so it starts suspended.
+      unlockAudio()
       ctx.phase = 'riding'
       ctx.speedScale = 1
     },
@@ -87,11 +106,15 @@ export function createRideGame(
     },
     pause() {
       k.debug.paused = true
+      setAudioSuspended(true)
+      resetCombo()
     },
     resume() {
       k.debug.paused = false
+      setAudioSuspended(false)
     },
     destroy() {
+      destroyAudio()
       k.quit()
     },
     setDistance(d) {

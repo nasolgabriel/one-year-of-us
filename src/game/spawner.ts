@@ -11,8 +11,10 @@ import {
   puddleOps,
   yarnOps,
 } from './sprites'
-import { actAt, COLLECT_RADIUS, SPAWN, type Act } from './config'
+import { actAt, COLLECT_RADIUS, SFX, SPAWN, type Act } from './config'
+import { sfxCollect, sfxHit, sfxMeow } from './audio'
 import { GROUND_Y, spawnBurst } from './world'
+import type { HitFlash } from './hitFlash'
 import type { Player } from './player'
 import type { CollectibleKind, ObstacleKind, RideCtx } from './types'
 
@@ -55,7 +57,7 @@ function pickCollectible(act: Act): keyof typeof COLLECTIBLES {
   return 'heart'
 }
 
-export function setupSpawner(ctx: RideCtx, player: Player) {
+export function setupSpawner(ctx: RideCtx, player: Player, hitFlash: HitFlash) {
   const { k } = ctx
 
   // Sprite looks — 1:1 art-pass pixels; obstacle roots sit at the ground
@@ -129,8 +131,15 @@ export function setupSpawner(ctx: RideCtx, player: Player) {
 
     for (const o of k.get('obstacle')) {
       if (!o.hit && player.grounded() && Math.abs(o.pos.x - px) < o.halfW + 12) {
+        // Latch regardless — the obstacle is behind us either way. Only the
+        // consequence waits for the grace window.
         o.hit = true
-        player.bump()
+        if (player.canBeHit()) {
+          player.bump()
+          sfxHit()
+          hitFlash.fire()
+          ctx.events.onHit()
+        }
       }
     }
 
@@ -139,6 +148,12 @@ export function setupSpawner(ctx: RideCtx, player: Player) {
       const dy = c.pos.y - py
       if (dx * dx + dy * dy < COLLECT_RADIUS * COLLECT_RADIUS) {
         spawnBurst(k, c.pos.x, c.pos.y, c.tint)
+        sfxCollect()
+        // Phase is 'pickup' for the whole Sophie beat and this loop is behind
+        // the riding-only return above, so act 3 here means she is aboard.
+        if (actAt(ctx.distance, ctx.timeline.pickup) === 3 && Math.random() < SFX.meowChance) {
+          sfxMeow()
+        }
         ctx.events.onCollect(c.kind)
         c.destroy()
       }

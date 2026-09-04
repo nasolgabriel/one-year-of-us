@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { AnimatePresence, m } from 'framer-motion'
 import { useLenis } from 'lenis/react'
 import MemoryCard from '@/components/ui/MemoryCard'
 import RideHud, { HudChip } from '@/components/ui/RideHud'
+import { isMuted, setMuted as setAudioMuted, subscribeMute } from '@/game/audio'
 import { fetchRideSettings } from '@/lib/rideData'
 import type { GameHandle, MilestoneDef, RideSettings } from '@/game/types'
 
@@ -36,6 +37,11 @@ export default function TheRide() {
   const [sophieAboard, setSophieAboard] = useState(false)
   const [hopped, setHopped] = useState(false)
   const lockScrollY = useRef(0)
+
+  // The audio module owns the preference; the server snapshot stays false so
+  // hydration matches before localStorage is read.
+  const muted = useSyncExternalStore(subscribeMute, isMuted, () => false)
+  const toggleMute = () => setAudioMuted(!muted)
 
   const lock = () => {
     lenis?.stop()
@@ -85,7 +91,12 @@ export default function TheRide() {
                 setSophieAboard(true)
                 capTimer = window.setTimeout(() => setInPickup(false), 1400)
               },
-              onCollect: () => setHearts((h) => h + 1),
+              // Milestone polaroids have their own marks on the progress
+              // track — counting them here would tally the same catch twice.
+              onCollect: (kind) => {
+                if (kind !== 'polaroid') setHearts((h) => h + 1)
+              },
+              onHit: () => setHearts((h) => Math.max(0, h - 1)),
               onFinish: () => {
                 setFinished(true)
                 unlock()
@@ -228,6 +239,8 @@ export default function TheRide() {
           )}
           passed={settings.milestones.map((def) => distance >= def.distance)}
           dim={milestone !== null}
+          muted={muted}
+          onToggleMute={toggleMute}
         />
       )}
 

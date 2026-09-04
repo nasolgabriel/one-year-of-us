@@ -10,7 +10,8 @@ import {
   sophieBasketHeadOps,
   spokeOps,
 } from './sprites'
-import { BOB, BUMP_TIME, HOP, PLAYER_X_FRAC } from './config'
+import { BOB, BUMP_TIME, HIT, HIT_TINT, HOP, PLAYER_X_FRAC } from './config'
+import { sfxHop } from './audio'
 import { GROUND_Y } from './world'
 import type { RideCtx } from './types'
 
@@ -19,7 +20,19 @@ export type Player = {
   hop(): void
   bump(): void
   grounded(): boolean
+  canBeHit(): boolean
   setSophie(inBasket: boolean): void
+}
+
+// The rider is one k.rect per pixel run (sprites.emit), nested up to two levels
+// deep, and the root carries no colour of its own — so a whole-rider tint has
+// to walk the tree. Collected fresh per hit, never cached: Sophie's basket head
+// is added mid-ride and a setup-time snapshot would never restore it.
+function collectTinted(obj: GameObj, out: GameObj[]) {
+  for (const c of obj.children as GameObj[]) {
+    if (c.color) out.push(c)
+    if (c.children.length) collectTinted(c, out)
+  }
 }
 
 // The art-pass rider, 40×36 virtual px, pixel-composed 1:1 from
@@ -66,6 +79,22 @@ export function setupPlayer(ctx: RideCtx): Player {
   let grounded = true
   let bumpT = 0
   let pedalT = 0
+  let blinkT = 0
+  let invulnT = 0
+  let tinted: GameObj[] = []
+  let baseColors: [number, number, number][] = []
+
+  const HIT_RGB = hexToRgb(HIT_TINT)
+
+  const clearTint = () => {
+    tinted.forEach((o, i) => {
+      if (!o.exists()) return
+      const [r, g, b] = baseColors[i]
+      o.color = k.rgb(r, g, b)
+    })
+    tinted = []
+    baseColors = []
+  }
 
   const land = () => {
     root.scale = k.vec2(1.06, 0.92)
@@ -120,16 +149,47 @@ export function setupPlayer(ctx: RideCtx): Player {
     } else if (root.angle !== 0) {
       root.angle = 0
     }
+
+    if (invulnT > 0) invulnT = Math.max(0, invulnT - k.dt())
+
+    if (blinkT > 0) {
+      blinkT = Math.max(0, blinkT - k.dt())
+      if (blinkT === 0) {
+        clearTint()
+      } else {
+        const t = blinkT / HIT.blink
+        const mix = Math.abs(Math.sin(t * Math.PI * HIT.blinkPulses)) * t * HIT.blinkMix
+        tinted.forEach((o, i) => {
+          if (!o.exists()) return
+          const [r, g, b] = baseColors[i]
+          o.color = k.rgb(
+            r + (HIT_RGB[0] - r) * mix,
+            g + (HIT_RGB[1] - g) * mix,
+            b + (HIT_RGB[2] - b) * mix,
+          )
+        })
+      }
+    }
   })
 
   const hop = () => {
     if (ctx.phase !== 'riding' || !grounded) return
     grounded = false
     vy = HOP.velocity
+    sfxHop()
   }
 
   const bump = () => {
     if (bumpT <= 0) bumpT = BUMP_TIME
+    // Snapshotting mid-blink would capture already-tinted colours as the
+    // baseline and leave the rider permanently red.
+    if (blinkT <= 0) {
+      tinted = []
+      collectTinted(root, tinted)
+      baseColors = tinted.map((o) => [o.color.r, o.color.g, o.color.b])
+    }
+    blinkT = HIT.blink
+    invulnT = HIT.invuln
   }
 
   // Sophie riding in the basket — created on pickup, kept for the ride.
@@ -147,5 +207,12 @@ export function setupPlayer(ctx: RideCtx): Player {
   k.onMousePress(hop)
   k.onKeyPress('space', hop)
 
-  return { obj: root, hop, bump, grounded: () => grounded, setSophie }
+  return {
+    obj: root,
+    hop,
+    bump,
+    grounded: () => grounded,
+    canBeHit: () => invulnT <= 0,
+    setSophie,
+  }
 }

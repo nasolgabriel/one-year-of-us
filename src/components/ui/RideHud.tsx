@@ -53,6 +53,31 @@ export function HudChip({ children }: { children: ReactNode }) {
   )
 }
 
+// The HUD root is pointer-events-none, so this is the one element that opts
+// back in.
+export function MuteToggle({ muted, onToggle }: { muted: boolean; onToggle(): void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={!muted}
+      aria-label={muted ? 'sound off' : 'sound on'}
+      className="font-sans pointer-events-auto"
+      style={{
+        ...chipStyle,
+        opacity: muted ? 0.55 : 1,
+        transition: 'opacity 0.25s',
+        cursor: 'pointer',
+      }}
+    >
+      <span aria-hidden style={{ fontSize: 10, lineHeight: 1 }}>
+        {muted ? '·' : '✧'}
+      </span>
+      {muted ? 'muted' : 'sound'}
+    </button>
+  )
+}
+
 // The ride HUD — DOM overlay over the canvas, per the art pass: act chip and
 // heart counter up top, a hairline progress track with the five milestone
 // hearts, the accent marker, and a ✧ at the finish.
@@ -63,6 +88,8 @@ export default function RideHud({
   milestones,
   passed,
   dim,
+  muted,
+  onToggleMute,
 }: {
   act: string
   hearts: number
@@ -70,6 +97,8 @@ export default function RideHud({
   milestones: number[]
   passed: boolean[]
   dim: boolean
+  muted: boolean
+  onToggleMute(): void
 }) {
   return (
     <div
@@ -78,22 +107,25 @@ export default function RideHud({
     >
       <div className="flex items-start justify-between">
         <HudChip>{act}</HudChip>
-        <HudChip>
-          <PixelHeartSvg size={9} color={HEART} />
-          <b
-            className="font-serif"
-            style={{
-              fontWeight: 600,
-              fontStyle: 'normal',
-              fontSize: 12,
-              lineHeight: 0.8,
-              letterSpacing: '0.06em',
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
-            ×{' '}{hearts}
-          </b>
-        </HudChip>
+        <div className="flex items-center" style={{ gap: 6 }}>
+          <HudChip>
+            <PixelHeartSvg size={9} color={HEART} />
+            <b
+              className="font-serif"
+              style={{
+                fontWeight: 600,
+                fontStyle: 'normal',
+                fontSize: 12,
+                lineHeight: 0.8,
+                letterSpacing: '0.06em',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              ×{' '}{hearts}
+            </b>
+          </HudChip>
+          <MuteToggle muted={muted} onToggle={onToggleMute} />
+        </div>
       </div>
 
       <div className="relative mx-auto" style={{ width: 108, height: 12, marginTop: 12 }}>

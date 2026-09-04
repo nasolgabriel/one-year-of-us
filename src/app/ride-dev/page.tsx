@@ -45,6 +45,7 @@ export default function RideDevPage() {
             onPickupStart: () => console.log('[ride-dev] pickup start'),
             onSophiePickup: () => console.log('[ride-dev] sophie pickup'),
             onCollect: (kind) => console.log('[ride-dev] collect', kind),
+            onHit: () => console.log('[ride-dev] hit'),
             onFinish: () => console.log('[ride-dev] finish'),
           },
           rideSettings,

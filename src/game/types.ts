@@ -36,6 +36,7 @@ export type GameEvents = {
   onPickupStart(): void
   onSophiePickup(): void
   onCollect(kind: CollectibleKind): void
+  onHit(): void
   onFinish(): void
 }
 

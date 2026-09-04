@@ -92,6 +92,33 @@ export const COLLECT_RADIUS = 16
 // Bump wobble duration after clipping an obstacle, seconds.
 export const BUMP_TIME = 0.45
 
+export const HIT = {
+  invuln: 0.9,
+  blink: 0.36,
+  blinkPulses: 3,
+  blinkMix: 0.72,
+  flashOpacity: 0.22,
+  flashIn: 0.06,
+  flashOut: 0.3,
+} as const
+
+export const HIT_TINT = COLORS.accentAlt
+export const FLASH_TINT = COLORS.rose
+
+export const SFX = {
+  master: 0.5,
+  hop: 0.18,
+  collect: 0.22,
+  hit: 0.3,
+  milestone: 0.26,
+  finish: 0.3,
+  meow: 0.2,
+  comboWindow: 1.6,
+  comboMax: 7,
+  meowChance: 0.35,
+  fade: 0.06,
+} as const
+
 // Memory mode — the world settles to slowScale over `slowdown` seconds, the
 // card shows, then speeds back up over `speedup` on "keep riding →".
 export const MEMORY = {
