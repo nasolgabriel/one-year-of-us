@@ -53,8 +53,6 @@ export function HudChip({ children }: { children: ReactNode }) {
   )
 }
 
-// The HUD root is pointer-events-none, so this is the one element that opts
-// back in.
 export function MuteToggle({ muted, onToggle }: { muted: boolean; onToggle(): void }) {
   return (
     <button

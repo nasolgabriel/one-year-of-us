@@ -46,8 +46,6 @@ export function unlockAudio() {
   applyGain()
 }
 
-// kaplay calls audioCtx.resume() itself whenever debug.paused is true, so
-// suspending the context is undone immediately — silence has to happen here.
 export function setAudioSuspended(next: boolean) {
   suspended = next
   applyGain()
@@ -201,8 +199,6 @@ export function sfxFinish() {
   tone({ type: 'sine', freq: C5 * 3, dur: 1.0, gain: SFX.finish * 0.22, attack: 0.14, delay: 0.6 })
 }
 
-// High-Q lowpass stands in for a vocal formant; the sweep opens the vowel so
-// the two segments read as "me-ow" rather than a synth sweep.
 export function sfxMeow() {
   tone({
     type: 'sawtooth',

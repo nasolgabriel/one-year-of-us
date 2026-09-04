@@ -93,8 +93,6 @@ export function createRideGame(
   return {
     start() {
       if (ctx.phase !== 'idle') return
-      // The only real user gesture the game gets — kaplay builds its
-      // AudioContext at boot, from an observer callback, so it starts suspended.
       unlockAudio()
       ctx.phase = 'riding'
       ctx.speedScale = 1

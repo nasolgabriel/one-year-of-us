@@ -6,6 +6,7 @@ import { useLenis } from 'lenis/react'
 import MemoryCard from '@/components/ui/MemoryCard'
 import RideHud, { HudChip } from '@/components/ui/RideHud'
 import { isMuted, setMuted as setAudioMuted, subscribeMute } from '@/game/audio'
+import { duckMusic } from '@/lib/music'
 import { fetchRideSettings } from '@/lib/rideData'
 import type { GameHandle, MilestoneDef, RideSettings } from '@/game/types'
 
@@ -38,8 +39,6 @@ export default function TheRide() {
   const [hopped, setHopped] = useState(false)
   const lockScrollY = useRef(0)
 
-  // The audio module owns the preference; the server snapshot stays false so
-  // hydration matches before localStorage is read.
   const muted = useSyncExternalStore(subscribeMute, isMuted, () => false)
   const toggleMute = () => setAudioMuted(!muted)
 
@@ -91,8 +90,6 @@ export default function TheRide() {
                 setSophieAboard(true)
                 capTimer = window.setTimeout(() => setInPickup(false), 1400)
               },
-              // Milestone polaroids have their own marks on the progress
-              // track — counting them here would tally the same catch twice.
               onCollect: (kind) => {
                 if (kind !== 'polaroid') setHearts((h) => h + 1)
               },
@@ -132,6 +129,12 @@ export default function TheRide() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    duckMusic(milestone !== null)
+  }, [milestone])
+
+  useEffect(() => () => duckMusic(false), [])
 
   // Pause the engine whenever the section leaves the viewport.
   useEffect(() => {

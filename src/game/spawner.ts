@@ -131,8 +131,6 @@ export function setupSpawner(ctx: RideCtx, player: Player, hitFlash: HitFlash) {
 
     for (const o of k.get('obstacle')) {
       if (!o.hit && player.grounded() && Math.abs(o.pos.x - px) < o.halfW + 12) {
-        // Latch regardless — the obstacle is behind us either way. Only the
-        // consequence waits for the grace window.
         o.hit = true
         if (player.canBeHit()) {
           player.bump()
@@ -149,8 +147,6 @@ export function setupSpawner(ctx: RideCtx, player: Player, hitFlash: HitFlash) {
       if (dx * dx + dy * dy < COLLECT_RADIUS * COLLECT_RADIUS) {
         spawnBurst(k, c.pos.x, c.pos.y, c.tint)
         sfxCollect()
-        // Phase is 'pickup' for the whole Sophie beat and this loop is behind
-        // the riding-only return above, so act 3 here means she is aboard.
         if (actAt(ctx.distance, ctx.timeline.pickup) === 3 && Math.random() < SFX.meowChance) {
           sfxMeow()
         }

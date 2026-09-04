@@ -24,10 +24,6 @@ export type Player = {
   setSophie(inBasket: boolean): void
 }
 
-// The rider is one k.rect per pixel run (sprites.emit), nested up to two levels
-// deep, and the root carries no colour of its own — so a whole-rider tint has
-// to walk the tree. Collected fresh per hit, never cached: Sophie's basket head
-// is added mid-ride and a setup-time snapshot would never restore it.
 function collectTinted(obj: GameObj, out: GameObj[]) {
   for (const c of obj.children as GameObj[]) {
     if (c.color) out.push(c)
@@ -181,8 +177,6 @@ export function setupPlayer(ctx: RideCtx): Player {
 
   const bump = () => {
     if (bumpT <= 0) bumpT = BUMP_TIME
-    // Snapshotting mid-blink would capture already-tinted colours as the
-    // baseline and leave the rider permanently red.
     if (blinkT <= 0) {
       tinted = []
       collectTinted(root, tinted)

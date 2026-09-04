@@ -8,6 +8,8 @@ import { useUnlock } from '@/hooks/useUnlock'
 import LockedHero from '@/components/scenes/LockedHero'
 import Hero from '@/components/scenes/Hero'
 import PhotoPreloader from '@/components/PhotoPreloader'
+import MusicToggle from '@/components/ui/MusicToggle'
+import { startMusic, stopMusic } from '@/lib/music'
 
 const BeforeBeginning = dynamic(() => import('@/components/scenes/BeforeBeginning'), { ssr: false })
 const TheRide = dynamic(() => import('@/components/scenes/TheRide'), { ssr: false })
@@ -21,6 +23,12 @@ export default function Home() {
   // hero's one-shot entrance reveal plays AS the overlay clears — not hidden behind
   // it during 'unlocking'. The overlay's fade still covers the mount frame, no flash.
   const showScenes = state === 'unlocked'
+
+  useEffect(() => {
+    if (!showScenes) return
+    startMusic()
+    return () => stopMusic()
+  }, [showScenes])
 
   useEffect(() => {
     document.body.style.overflow = showOverlay ? 'hidden' : ''
@@ -40,6 +48,7 @@ export default function Home() {
           <BeforeBeginning />
           <TheRide />
           <Album />
+          <MusicToggle />
         </>
       )}
 
