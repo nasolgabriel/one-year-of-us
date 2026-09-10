@@ -14,6 +14,7 @@ import { startMusic, stopMusic } from '@/lib/music'
 const BeforeBeginning = dynamic(() => import('@/components/scenes/BeforeBeginning'), { ssr: false })
 const TheRide = dynamic(() => import('@/components/scenes/TheRide'), { ssr: false })
 const Album = dynamic(() => import('@/components/scenes/Album'), { ssr: false })
+const Letter = dynamic(() => import('@/components/scenes/Letter'), { ssr: false })
 
 export default function Home() {
   const { state, timeRemaining } = useUnlock()
@@ -48,6 +49,7 @@ export default function Home() {
           <BeforeBeginning />
           <TheRide />
           <Album />
+          <Letter />
           <MusicToggle />
         </>
       )}

@@ -9,10 +9,15 @@ let el: HTMLAudioElement | null = null
 let userMuted = false
 let ducked = false
 let prefLoaded = false
+let playing = false
 let fadeRaf = 0
 let armed = false
 
 const listeners = new Set<() => void>()
+
+function notify() {
+  listeners.forEach((fn) => fn())
+}
 
 export function subscribeMusic(fn: () => void) {
   listeners.add(fn)
@@ -31,15 +36,19 @@ export function isMusicMuted() {
   return userMuted
 }
 
+export function isMusicOn() {
+  return !isMusicMuted() && playing
+}
+
 function targetVolume() {
   if (isMusicMuted()) return 0
   return ducked ? DUCK_VOLUME : BASE_VOLUME
 }
 
 function fadeTo(target: number) {
-  if (!el) return
-  cancelAnimationFrame(fadeRaf)
   const node = el
+  if (!node) return
+  cancelAnimationFrame(fadeRaf)
   const from = node.volume
   const start = performance.now()
   const step = (now: number) => {
@@ -50,55 +59,81 @@ function fadeTo(target: number) {
   fadeRaf = requestAnimationFrame(step)
 }
 
-// Autoplay with sound needs a gesture. An unlock reached by the countdown
-// hitting zero never had one, so a rejected play arms the next tap instead.
+function ensureEl() {
+  if (el) return el
+  const node = new Audio(SRC)
+  node.loop = true
+  node.preload = 'auto'
+  node.volume = 0
+  node.addEventListener('play', () => {
+    playing = true
+    notify()
+  })
+  node.addEventListener('pause', () => {
+    playing = false
+    notify()
+  })
+  el = node
+  return node
+}
+
+// A rejected play means the browser has seen no qualifying gesture yet, so the
+// next one on the page starts it instead.
 function armGesture() {
   if (armed) return
   armed = true
   const go = () => {
-    window.removeEventListener('pointerdown', go)
+    window.removeEventListener('click', go)
     window.removeEventListener('keydown', go)
     armed = false
     attempt()
   }
-  window.addEventListener('pointerdown', go)
+  window.addEventListener('click', go)
   window.addEventListener('keydown', go)
 }
 
+function disarmGesture() {
+  armed = false
+}
+
 function attempt() {
-  if (!el || isMusicMuted()) return
-  el.play().then(
+  if (isMusicMuted()) return
+  const node = ensureEl()
+  node.play().then(
     () => fadeTo(targetVolume()),
     () => armGesture(),
   )
 }
 
 export function startMusic() {
-  if (el) return
-  el = new Audio(SRC)
-  el.loop = true
-  el.preload = 'auto'
-  el.volume = 0
+  ensureEl()
   attempt()
 }
 
 export function stopMusic() {
   cancelAnimationFrame(fadeRaf)
   el?.pause()
-  el = null
-  armed = false
-  ducked = false
 }
 
-export function setMusicMuted(next: boolean) {
+function persist(next: boolean) {
   prefLoaded = true
   userMuted = next
   try {
     localStorage.setItem(STORAGE_KEY, next ? '1' : '0')
   } catch {}
-  if (next) fadeTo(0)
-  else attempt()
-  listeners.forEach((fn) => fn())
+}
+
+export function toggleMusic() {
+  if (isMusicOn()) {
+    persist(true)
+    fadeTo(0)
+    disarmGesture()
+    notify()
+    return
+  }
+  persist(false)
+  attempt()
+  notify()
 }
 
 export function duckMusic(next: boolean) {

@@ -1,17 +1,18 @@
 'use client'
 
 import { useSyncExternalStore } from 'react'
-import { isMusicMuted, setMusicMuted, subscribeMusic } from '@/lib/music'
+import { isMusicOn, subscribeMusic, toggleMusic } from '@/lib/music'
 
 export default function MusicToggle() {
-  const muted = useSyncExternalStore(subscribeMusic, isMusicMuted, () => false)
+  const on = useSyncExternalStore(subscribeMusic, isMusicOn, () => false)
+  const muted = !on
 
   return (
     <button
       type="button"
-      onClick={() => setMusicMuted(!muted)}
-      aria-pressed={!muted}
-      aria-label={muted ? 'music off' : 'music on'}
+      onClick={toggleMusic}
+      aria-pressed={on}
+      aria-label={on ? 'music on' : 'music off'}
       className="font-sans fixed z-50"
       style={{
         right: 14,
