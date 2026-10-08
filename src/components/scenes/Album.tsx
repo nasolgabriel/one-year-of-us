@@ -147,9 +147,6 @@ function ScrubAlbum({ photos }: { photos: AlbumPhoto[] }) {
   return (
     <section ref={ref} style={{ height: '700vh', position: 'relative', background: P.bg }}>
       <div className="sticky top-0 h-dvh overflow-hidden">
-        <div className="absolute left-0 right-0 top-[12dvh] flex justify-center px-6">
-          <Label>our year, one at a time</Label>
-        </div>
 
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative flex items-center justify-center" style={{ width: 272, height: 360 }}>
@@ -328,7 +325,7 @@ function SwipeAlbum({ photos }: { photos: AlbumPhoto[] }) {
   return (
     <section ref={sectionRef} style={{ height: '100dvh', position: 'relative', background: P.bg, overflow: 'hidden' }}>
       <div className="absolute left-0 right-0 top-[12dvh] flex justify-center px-6">
-        <Label>our year, one at a time</Label>
+        <Label>our year, one moment at a time</Label>
       </div>
 
       <div className="absolute inset-0 flex items-center justify-center">

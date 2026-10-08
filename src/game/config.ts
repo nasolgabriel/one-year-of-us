@@ -120,7 +120,7 @@ export const SFX = {
 } as const
 
 // Memory mode — the world settles to slowScale over `slowdown` seconds, the
-// card shows, then speeds back up over `speedup` on "keep riding →".
+// card shows, then speeds back up over `speedup` on "Continue →".
 export const MEMORY = {
   slowScale: 0.2,
   slowdown: 0.8,

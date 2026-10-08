@@ -302,12 +302,6 @@ export default function TheRide() {
 
       {!started && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-6 px-6">
-          <span
-            className="font-sans uppercase"
-            style={{ color: P.ink, fontSize: 11, letterSpacing: '0.3em', opacity: 0.65 }}
-          >
-            scene four · the ride
-          </span>
           <button
             onClick={start}
             disabled={!ready}

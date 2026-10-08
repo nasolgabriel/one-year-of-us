@@ -164,7 +164,7 @@ export default function MemoryCard({
             borderRadius: 4,
           }}
         >
-          keep riding →
+           Continue →
         </button>
       </m.div>
     </m.div>

@@ -20,10 +20,10 @@ const P = {
 const PART_A = [
   'before you, life was simple…',
   'quiet days, ordinary moments.',
-  'then i met you.',
+  'I’m good with what I have,  and I’m not searching for anyone.',
 ]
 const PART_B = [
-  'you came into my life…',
+  'I met you.',
   'one conversation became another.',
   'and little by little, before i knew it, we were writing our story together.',
 ]
@@ -164,7 +164,6 @@ export default function BeforeBeginning() {
       <m.div className="absolute inset-0 -z-10" style={{ backgroundColor: bg }} aria-hidden />
 
       <div className="relative flex min-h-[160dvh] flex-col items-center justify-center gap-7 px-6 text-center">
-        <Label color={P.cotton}>part a · before</Label>
         <div className="flex flex-col gap-6">
           {PART_A.map((line, i) => (
             <StoryLine key={i} text={line} i={i} color={P.cream} reduced={reduced} />
@@ -181,12 +180,11 @@ export default function BeforeBeginning() {
           className="font-serif italic"
           style={{ color: P.rose, fontSize: 'clamp(1.2rem, 4vw, 1.9rem)', letterSpacing: '0.08em' }}
         >
-          ✧ dawn breaks ✧
+          and then...
         </m.p>
       </div>
 
       <div className="relative flex min-h-[170dvh] flex-col items-center justify-center gap-10 px-6 text-center">
-        <Label color={P.rose}>part b · beginning</Label>
         <StoryLine text={PART_B[0]} i={0} color={P.ink} reduced={reduced} />
         <Polaroid reduced={reduced} first={first} />
         <div className="flex flex-col gap-6">
