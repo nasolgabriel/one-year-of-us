@@ -8,6 +8,7 @@ import RideHud, { HudChip } from '@/components/ui/RideHud'
 import { isMuted, setMuted as setAudioMuted, subscribeMute } from '@/game/audio'
 import { duckMusic } from '@/lib/music'
 import { fetchRideSettings } from '@/lib/rideData'
+import { lockScroll, unlockScroll } from '@/lib/scrollLock'
 import type { GameHandle, MilestoneDef, RideSettings } from '@/game/types'
 
 const P = {
@@ -37,27 +38,17 @@ export default function TheRide() {
   const [inPickup, setInPickup] = useState(false)
   const [sophieAboard, setSophieAboard] = useState(false)
   const [hopped, setHopped] = useState(false)
-  const lockScrollY = useRef(0)
+  const [skipped, setSkipped] = useState(false)
 
   const muted = useSyncExternalStore(subscribeMute, isMuted, () => false)
   const toggleMute = () => setAudioMuted(!muted)
 
-  const lock = () => {
+  const lock = (y: number) => {
     lenis?.stop()
-    lockScrollY.current = window.scrollY
-    document.documentElement.style.overflow = 'hidden'
-    document.body.style.position = 'fixed'
-    document.body.style.top = `-${lockScrollY.current}px`
-    document.body.style.left = '0'
-    document.body.style.right = '0'
+    lockScroll(y)
   }
   const unlock = () => {
-    document.documentElement.style.overflow = ''
-    document.body.style.position = ''
-    document.body.style.top = ''
-    document.body.style.left = ''
-    document.body.style.right = ''
-    window.scrollTo(0, lockScrollY.current)
+    unlockScroll()
     lenis?.start()
   }
 
@@ -136,10 +127,11 @@ export default function TheRide() {
 
   useEffect(() => () => duckMusic(false), [])
 
-  // Pause the engine whenever the section leaves the viewport.
+  // Pause the engine whenever the section leaves the viewport. A skipped ride
+  // stays frozen.
   useEffect(() => {
     const section = sectionRef.current
-    if (!section || !ready) return
+    if (!section || !ready || skipped) return
     const io = new IntersectionObserver((entries) => {
       const visible = entries.some((e) => e.isIntersecting)
       if (visible) handleRef.current?.resume()
@@ -147,16 +139,16 @@ export default function TheRide() {
     })
     io.observe(section)
     return () => io.disconnect()
-  }, [ready])
+  }, [ready, skipped])
 
   // Distance clock → HUD progress, polled gently; the game stays canvas-side.
   useEffect(() => {
-    if (!started || finished) return
+    if (!started || finished || skipped) return
     const id = window.setInterval(() => {
       setDistance(handleRef.current?.getDistance() ?? 0)
     }, 200)
     return () => window.clearInterval(id)
-  }, [started, finished])
+  }, [started, finished, skipped])
 
   // First hop dismisses the hint chip.
   useEffect(() => {
@@ -177,29 +169,26 @@ export default function TheRide() {
     const section = sectionRef.current
     if (!section || !handleRef.current) return
     setStarted(true)
-    // Snap the section flush with the viewport before locking scroll.
-    const top = window.scrollY + section.getBoundingClientRect().top
-    if (lenis) lenis.scrollTo(top, { immediate: true })
-    else window.scrollTo(0, top)
-    lock()
+    lock(window.scrollY + section.getBoundingClientRect().top)
     handleRef.current.start()
-    canvasRef.current?.focus()
+    canvasRef.current?.focus({ preventScroll: true })
   }
 
   // Skip or finish: release the lock and glide just past the section so the
-  // Album takes over. Lenis re-measures on the frame after the overflow lock
-  // clears — scrolling before that clamps the target to 0.
+  // Album takes over. A skipped ride freezes and lets touches fall through the
+  // canvas — Kaplay cancels touchmove on it, which would trap scrolling back up.
   const leave = () => {
+    const section = sectionRef.current
+    if (!section) return
+    if (!finished) {
+      setSkipped(true)
+      handleRef.current?.pause()
+      canvasRef.current?.blur()
+    }
     unlock()
-    requestAnimationFrame(() => {
-      const section = sectionRef.current
-      if (!section) return
-      lenis?.resize()
-      const top = window.scrollY + section.getBoundingClientRect().top
-      const target = top + section.offsetHeight
-      if (lenis) lenis.scrollTo(target)
-      else window.scrollTo({ top: target, behavior: 'smooth' })
-    })
+    const target = window.scrollY + section.getBoundingClientRect().top + section.offsetHeight
+    if (lenis) lenis.scrollTo(target)
+    else window.scrollTo({ top: target, behavior: 'smooth' })
   }
 
   const act = finished
@@ -216,7 +205,11 @@ export default function TheRide() {
       className="relative overflow-hidden"
       style={{ height: '100dvh', background: P.bg }}
     >
-      <div ref={holderRef} className="absolute inset-0" />
+      <div
+        ref={holderRef}
+        className="absolute inset-0"
+        style={skipped ? { pointerEvents: 'none' } : undefined}
+      />
 
       {/* Vignette + grain — same treatment as the art pass screens. */}
       <div
@@ -232,7 +225,7 @@ export default function TheRide() {
         aria-hidden
       />
 
-      {started && settings && (
+      {started && settings && !skipped && (
         <RideHud
           act={act}
           hearts={hearts}
@@ -249,7 +242,7 @@ export default function TheRide() {
 
       {/* "tap to hop ✧" — fades out after the first hop. */}
       <AnimatePresence>
-        {started && !hopped && !finished && (
+        {started && !hopped && !finished && !skipped && (
           <m.div
             className="pointer-events-none absolute inset-x-0 z-10 flex justify-center"
             style={{ bottom: 22 }}
@@ -264,7 +257,7 @@ export default function TheRide() {
 
       {/* Act 2 capline while the world slows for Sophie. */}
       <AnimatePresence>
-        {inPickup && (
+        {inPickup && !skipped && (
           <m.div
             className="pointer-events-none absolute inset-x-0 z-10 text-center"
             style={{ bottom: 58 }}
@@ -322,10 +315,10 @@ export default function TheRide() {
         </div>
       )}
 
-      {started && !finished && !milestone && (
+      {started && !finished && !milestone && !skipped && (
         <button
           onClick={leave}
-          className="font-sans absolute bottom-5 right-5 z-10"
+          className="font-sans absolute bottom-5 left-5 z-10"
           style={{ color: P.ink, fontSize: 11, letterSpacing: '0.2em', opacity: 0.55 }}
         >
           skip the ride ↓
@@ -383,7 +376,7 @@ export default function TheRide() {
             onResume={() => {
               setMilestone(null)
               handleRef.current?.resumeFromMemory()
-              canvasRef.current?.focus()
+              canvasRef.current?.focus({ preventScroll: true })
             }}
           />
         )}

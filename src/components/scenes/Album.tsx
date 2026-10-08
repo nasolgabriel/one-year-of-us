@@ -6,6 +6,7 @@ import { m, useScroll, useSpring, useTransform, type MotionValue } from 'framer-
 import { useLenis } from 'lenis/react'
 import { fetchPhotos } from '@/lib/supabase'
 import { cropImageStyle } from '@/lib/crop'
+import { lockScroll, unlockScroll } from '@/lib/scrollLock'
 
 const P = {
   bg:     '#FFCDD2', // cotton candy ground
@@ -200,6 +201,7 @@ function SwipeCard({
 }
 
 const SWIPE_THRESHOLD = 36 // px of vertical travel to count as one step
+const EDGE = 1 // px of slack — dvh offsets are fractional, so a scroll can stop just short of flush
 
 function SwipeAlbum({ photos }: { photos: AlbumPhoto[] }) {
   const sectionRef = useRef<HTMLElement>(null)
@@ -212,78 +214,74 @@ function SwipeAlbum({ photos }: { photos: AlbumPhoto[] }) {
 
   const lenis = useLenis()
   const engagedRef = useRef(false)
-  const cooldownRef = useRef(false)
+  const prevTopRef = useRef(0)
   const startY = useRef(0)
   const startX = useRef(0)
 
-  const lock = () => {
-    lenis?.stop()
-    document.documentElement.style.overflow = 'hidden'
-    document.body.style.overflow = 'hidden'
-  }
-  const unlock = () => {
-    document.documentElement.style.overflow = ''
-    document.body.style.overflow = ''
-    lenis?.start()
-  }
-
-  // Engage (pin + lock) once the section fully fills the viewport, so the stack is
-  // centered and the page can't be flung past it until every card is peeled.
+  // Engage (pin + lock) when the section's top crosses the viewport top from
+  // either side, so the page can't be flung past the stack until every card is
+  // peeled. A fling moves far more than a pixel per frame, so this watches for
+  // the crossing instead of an exact landing; pinning at the section's own
+  // offset then snaps it flush however far the fling overshot.
   useEffect(() => {
     const el = sectionRef.current
     if (!el) return
     let raf = 0
+    prevTopRef.current = el.getBoundingClientRect().top
     const check = () => {
       raf = 0
-      if (engagedRef.current || cooldownRef.current) return
-      const r = el.getBoundingClientRect()
-      const vh = window.innerHeight
-      if (r.top <= 1 && r.bottom >= vh - 1) {
+      const top = el.getBoundingClientRect().top
+      const prev = prevTopRef.current
+      prevTopRef.current = top
+      if (engagedRef.current) return
+      if ((prev > EDGE && top <= EDGE) || (prev < -EDGE && top >= -EDGE)) {
         engagedRef.current = true
-        lock()
+        lenis?.stop()
+        lockScroll(window.scrollY + top)
       }
     }
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(check)
     }
-    check()
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', onScroll)
     return () => {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onScroll)
       if (raf) cancelAnimationFrame(raf)
-      unlock()
+      if (engagedRef.current) {
+        engagedRef.current = false
+        unlockScroll()
+        lenis?.start()
+      }
     }
-  }, [])
+  }, [lenis])
 
-  // Release the lock at a boundary and scroll the page just past the section so the
-  // next/previous scene takes over. `dir` +1 = leave downward, -1 = leave upward.
+  // Release the lock at a boundary and move the page fully past the section so
+  // the next/previous scene takes over. `dir` +1 = leave downward, -1 = upward.
   const release = (dir: 1 | -1) => {
     const el = sectionRef.current
     if (!el) return
     engagedRef.current = false
-    cooldownRef.current = true
-    unlock()
+    unlockScroll()
     const top = window.scrollY + el.getBoundingClientRect().top
-    const vh = window.innerHeight
-    // Move the page fully past the section so the next/previous scene takes over.
-    const target = dir > 0 ? top + el.offsetHeight : top - vh
-    if (lenis) lenis.scrollTo(target, { immediate: true })
-    else window.scrollTo(0, target)
-    window.setTimeout(() => {
-      cooldownRef.current = false
-    }, 450)
+    window.scrollTo(0, dir > 0 ? top + el.offsetHeight : top - window.innerHeight)
+    prevTopRef.current = el.getBoundingClientRect().top
+    lenis?.start()
   }
 
   // Touch handling: one vertical swipe = exactly one step, velocity ignored.
+  // A gesture already in flight when the stack pins is the scroll that brought
+  // it here, not a swipe, so only touches that start while engaged count.
   useEffect(() => {
     const el = sectionRef.current
     if (!el) return
+    let armed = false
     const onStart = (e: TouchEvent) => {
       const t = e.touches[0]
       startY.current = t.clientY
       startX.current = t.clientX
+      armed = engagedRef.current
     }
     const onMove = (e: TouchEvent) => {
       if (!engagedRef.current) return
@@ -294,7 +292,7 @@ function SwipeAlbum({ photos }: { photos: AlbumPhoto[] }) {
       if (Math.abs(dy) > Math.abs(dx)) e.preventDefault()
     }
     const onEnd = (e: TouchEvent) => {
-      if (!engagedRef.current) return
+      if (!engagedRef.current || !armed) return
       const t = e.changedTouches[0]
       const dy = t.clientY - startY.current
       const dx = t.clientX - startX.current

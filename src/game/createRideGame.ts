@@ -39,6 +39,9 @@ export function createRideGame(
     crisp: true,
     pixelDensity: 1,
     touchToMouse: true,
+    // Kaplay's own focus() would scroll the page to the canvas the moment the
+    // game boots, while the visitor is still a screen above it.
+    focus: false,
     background: hexToRgb(COLORS.green),
   })
 

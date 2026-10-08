@@ -51,6 +51,7 @@ export default function RideDevPage() {
           rideSettings,
         )
         handleRef.current = handle
+        canvas.focus()
         setPhase('idle')
       },
     )
