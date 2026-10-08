@@ -5,6 +5,8 @@ const BASE_VOLUME = 0.4
 const DUCK_VOLUME = 0.12
 const FADE_MS = 700
 
+const GESTURES = ['click', 'keydown', 'pointerup', 'touchend'] as const
+
 let el: HTMLAudioElement | null = null
 let userMuted = false
 let ducked = false
@@ -83,13 +85,11 @@ function armGesture() {
   if (armed) return
   armed = true
   const go = () => {
-    window.removeEventListener('click', go)
-    window.removeEventListener('keydown', go)
+    GESTURES.forEach((type) => window.removeEventListener(type, go))
     armed = false
     attempt()
   }
-  window.addEventListener('click', go)
-  window.addEventListener('keydown', go)
+  GESTURES.forEach((type) => window.addEventListener(type, go, { passive: true }))
 }
 
 function disarmGesture() {
